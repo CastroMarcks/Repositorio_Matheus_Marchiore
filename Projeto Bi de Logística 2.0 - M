@@ -1,0 +1,130 @@
+let
+    Fonte = Odbc.DataSource("dsn=PostgreSQL30", [HierarchicalNavigation=true]),
+    edigitalDb_Database = Fonte{[Name="edigitalDb",Kind="Database"]}[Data],
+    public_Schema = edigitalDb_Database{[Name="public",Kind="Schema"]}[Data],
+    pedido_Table = public_Schema{[Name="pedido",Kind="Table"]}[Data],
+    #"Personalização Adicionada" = Table.AddColumn(pedido_Table, "pedido_key", each [idPedido]&"_"&[loja]&"_"&[integradora]),
+    #"Valor Substituído" = Table.ReplaceValue(#"Personalização Adicionada","PENDING","Novo",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído0" = Table.ReplaceValue(#"Colunas Removidas","PENDING","Novo",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído1" = Table.ReplaceValue(#"Valor Substituído","novo","Novo",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído2" = Table.ReplaceValue(#"Valor Substituído1","aprovado","Aprovado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído3" = Table.ReplaceValue(#"Valor Substituído2","entregue","Entregue",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído4" = Table.ReplaceValue(#"Valor Substituído3","em viagem","Em viagem",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído5" = Table.ReplaceValue(#"Valor Substituído4","CONCLUDED","Entregue",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído6" = Table.ReplaceValue(#"Valor Substituído5","retornou","Cancelado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído7" = Table.ReplaceValue(#"Valor Substituído6","bloqueado","Cancelado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído8" = Table.ReplaceValue(#"Valor Substituído7","PAID_WAITING_SHIP","Aprovado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído9" = Table.ReplaceValue(#"Valor Substituído8","INVOICED","Faturado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído10" = Table.ReplaceValue(#"Valor Substituído9","PAID_WAITING_DELIVERY","Em viagem",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído11" = Table.ReplaceValue(#"Valor Substituído10","CANCELED","Cancelado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído12" = Table.ReplaceValue(#"Valor Substituído11","cancelado","Cancelado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído13" = Table.ReplaceValue(#"Valor Substituído12","solicitado devolução","Cancelado Retornando",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído14" = Table.ReplaceValue(#"Valor Substituído13","devolvido","Cancelado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído15" = Table.ReplaceValue(#"Valor Substituído14","faturando","Aprovado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído16" = Table.ReplaceValue(#"Valor Substituído15","retornando","Cancelado retornando",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído17" = Table.ReplaceValue(#"Valor Substituído16","Coletando","Faturado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído18" = Table.ReplaceValue(#"Valor Substituído17","coletando","Faturado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído19" = Table.ReplaceValue(#"Valor Substituído18","devolvendo","Cancelado Retornando",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído20" = Table.ReplaceValue(#"Valor Substituído19","desmembrado","Cancelado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído21" = Table.ReplaceValue(#"Valor Substituído20","Em aberto","Novo",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído22" = Table.ReplaceValue(#"Valor Substituído21","Em andamento","Aprovado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído23" = Table.ReplaceValue(#"Valor Substituído22","Baixado","Aprovado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído24" = Table.ReplaceValue(#"Valor Substituído23","Atendido","Faturado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído25" = Table.ReplaceValue(#"Valor Substituído24","Liberado","Faturado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído26" = Table.ReplaceValue(#"Valor Substituído25","Expedido","Em viagem",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído27" = Table.ReplaceValue(#"Valor Substituído26","Não aprovado","Novo",Replacer.ReplaceText,{"statusPedido"}),
+    #"Tipo Alterado" = Table.TransformColumnTypes(#"Valor Substituído27",{{"dataPedido", type date}}),
+    #"Colunas Removidas" = Table.RemoveColumns(#"Tipo Alterado",{"conciliacao_frete", "cotacao", "cron", "item", "pedidoAtivo", "diaRecebidoTransportadora", "prazoTransportadora", "previsaoEntregaTransportadora", "retornoApiTransportadora", "tempoEntregaTransportadora"}),
+    #"Colunas Renomeadas" = Table.RenameColumns(#"Colunas Removidas",{{"previsaoEntrega", "dataprevisaoEntrega"}}),
+    #"Colunas Reordenadas" = Table.ReorderColumns(#"Colunas Renomeadas",{"idPedido", "valorFrete", "statusPedido", "totalCompra", "marketplace", "canalVenda", "cpf", "nome", "email", "cep", "endereco", "numeroResidencia", "bairro", "complemento", "cidade", "uf", "responsavelRecebimento", "celular", "quantidadeParcelas", "meioPagamento", "numeroNF", "chaveNF", "transportadora", "transportadoraCNPJ", "urlRastreio", "dataPedido", "dataAprovacao", "dataExpedicao", "dataEntrega", "dataprevisaoEntrega", "dataFaturamento", "loja", "integradora", "idPedidoErp", "idPedidoMarketplace", "marketPlaceNumber", "freteTransportadora", "cronId", "pedido_key"}),
+    #"Subtração da Data Inserida" = Table.AddColumn(#"Colunas Reordenadas", "Subtração", each Duration.Days( [dataprevisaoEntrega]-[dataEntrega]), Int64.Type),
+    #"Colunas Reordenadas1" = Table.ReorderColumns(#"Subtração da Data Inserida",{"idPedido", "valorFrete", "statusPedido", "totalCompra", "marketplace", "canalVenda", "cpf", "nome", "email", "cep", "endereco", "numeroResidencia", "bairro", "complemento", "cidade", "uf", "responsavelRecebimento", "celular", "quantidadeParcelas", "meioPagamento", "numeroNF", "chaveNF", "transportadora", "transportadoraCNPJ", "urlRastreio", "dataPedido", "dataAprovacao", "dataExpedicao", "dataEntrega", "dataprevisaoEntrega", "dataFaturamento", "Subtração", "loja", "integradora", "idPedidoErp", "idPedidoMarketplace", "marketPlaceNumber", "freteTransportadora", "cronId", "pedido_key"}),
+    #"Valor Substituído28" = Table.ReplaceValue(#"Colunas Reordenadas1","Cancelado retornando","Cancelado Retornando",Replacer.ReplaceText,{"statusPedido"}),
+    #"Personalização Adicionada1" = Table.AddColumn(#"Valor Substituído28", "Entregas",
+each if [statusPedido] = "Cancelado" or [statusPedido] = "Cancelado Retornando" then "Cancelado"  
+else if [statusPedido] = "Entregue" and [Subtração] < 0 then "Entregue em atraso"
+else if [statusPedido] = "Entregue" and [Subtração] >= 0 then "Entregue no prazo"
+else if [dataprevisaoEntrega] = null then  "Sem previsão"
+else if [dataEntrega] = null and Date.From([dataprevisaoEntrega]) < Date.From(DateTime.LocalNow()) then "Pendente em atraso"
+else if [dataEntrega] = null and Date.From([dataprevisaoEntrega]) >= Date.From(DateTime.LocalNow()) then "Pendente no prazo"
+else "Sem informação"),
+    #"Colunas Renomeadas1" = Table.RenameColumns(#"Personalização Adicionada1",{{"Subtração", "Gap de diad de entrega"}}),
+    #"Texto em Maiúscula" = Table.TransformColumns(#"Colunas Renomeadas1",{{"cidade", Text.Upper, type text}})
+in
+    #"Texto em Maiúscula"
+
+let
+           Fonte = Excel.Workbook(File.Contents("C:\Users\e-Digital\Desktop\GitHub\e-Digital\Bases\Base PowerBI\Novos BI\Bases\Base IBGE.xls"), null, true),
+    DTB_2022_Municipio1 = Fonte{[Name="DTB_2022_Municipio"]}[Data],
+    #"Cabeçalhos Promovidos" = Table.PromoteHeaders(DTB_2022_Municipio1, [PromoteAllScalars=true]),
+    #"Tipo Alterado" = Table.TransformColumnTypes(#"Cabeçalhos Promovidos",{{"UF", Int64.Type}, {"Nome_UF", type text}, {"Sigla", type text}, {"Região Geográfica Intermediária", Int64.Type}, {"Nome Região Geográfica Intermediária", type text}, {"Região Geográfica Imediata", Int64.Type}, {"Nome Região Geográfica Imediata", type text}, {"Mesorregião Geográfica", Int64.Type}, {"Nome_Mesorregião", type text}, {"Microrregião Geográfica", Int64.Type}, {"Nome_Microrregião", type text}, {"Código Município Completo", Int64.Type}, {"Nome_Município", type text}, {"Município", type text}}),
+    #"Texto em Maiúscula" = Table.TransformColumns(#"Tipo Alterado",{{"Nome_Município", Text.Upper, type text}})
+in
+    #"Texto em Maiúscula"
+
+let
+    Fonte = Excel.Workbook(File.Contents("C:\Users\e-Digital\Desktop\GitHub\e-Digital\Bases\Base PowerBI\Novos BI\Bases\Base_Móveis_MM.xlsx"), null, true),
+    #"Base_Móveis (3)_Sheet" = Fonte{[Item="Base_Móveis (3)",Kind="Sheet"]}[Data],
+    #"Cabeçalhos Promovidos" = Table.PromoteHeaders(#"Base_Móveis (3)_Sheet", [PromoteAllScalars=true]),
+    #"Tipo Alterado" = Table.TransformColumnTypes(#"Cabeçalhos Promovidos",{{"Sku Loja", Int64.Type}, {"Fornecedor", type text}, {"Titulo", type text}, {"Categoria", type text}, {"Sku Variação", type any}, {"Situação", type text}}),
+    #"Personalização Adicionada" = Table.AddColumn(#"Tipo Alterado", "Loja", each "Lojas MM")
+in
+    #"Personalização Adicionada"
+
+let
+    Fonte = Excel.Workbook(File.Contents("C:\Users\e-Digital\Desktop\GitHub\e-Digital\Bases\Base PowerBI\Novos BI\Bases\Base_Categorias___ta_barato.xlsx"), null, true),
+    #"Base_Categorias_ (6)_Sheet" = Fonte{[Item="Base_Categorias_ (6)",Kind="Sheet"]}[Data],
+    #"Cabeçalhos Promovidos" = Table.PromoteHeaders(#"Base_Categorias_ (6)_Sheet", [PromoteAllScalars=true]),
+    #"Tipo Alterado" = Table.TransformColumnTypes(#"Cabeçalhos Promovidos",{{"Sku Loja", Int64.Type}, {"Marca", type text}, {"Titulo", type text}, {"Categoria", type text}, {"Categoria Final", type text}, {"Categoria Sub", type text}, {"Situação", type text}}),
+    #"Personalização Adicionada" = Table.AddColumn(#"Tipo Alterado", "Loja", each "Ta barato")
+in
+
+let
+    Fonte = Odbc.DataSource("dsn=PostgreSQL30", [HierarchicalNavigation=true]),
+    edigitalDb_Database = Fonte{[Name="edigitalDb",Kind="Database"]}[Data],
+    public_Schema = edigitalDb_Database{[Name="public",Kind="Schema"]}[Data],
+    item_Table = public_Schema{[Name="item",Kind="Table"]}[Data],
+    #"Personalização Adicionada" = Table.AddColumn(item_Table, "pedido_key", each [pedidoIdPedido]&"_"&[pedidoLoja]&"_"&[pedidoIntegradora]),
+    #"Colunas Reordenadas" = Table.ReorderColumns(#"Personalização Adicionada",{"pedido_key", "id", "sku", "titulo", "valorUnitario", "quantidade", "pedidoIdPedido", "pedidoLoja", "pedidoIntegradora", "pedido"}),
+    #"Personalização Adicionada1" = Table.AddColumn(#"Colunas Reordenadas", "sku_key", each [sku]&"_"&[pedidoLoja]&"_"&[pedidoIntegradora]),
+    #"Duplicatas Removidas" = Table.Distinct(#"Personalização Adicionada1", {"pedido_key"})
+in
+    #"Duplicatas Removidas"
+
+let
+    Fonte = Odbc.DataSource("dsn=PostgreSQL30", [HierarchicalNavigation=true]),
+    edigitalDb_Database = Fonte{[Name="edigitalDb",Kind="Database"]}[Data],
+    public_Schema = edigitalDb_Database{[Name="public",Kind="Schema"]}[Data],
+    balance_Table = public_Schema{[Name="balance",Kind="Table"]}[Data],
+    #"Personalização Adicionada" = Table.AddColumn(balance_Table, "sku_key", each [sku]&"_"&[loja]&"_"&[integradora]),
+    #"Colunas Reordenadas" = Table.ReorderColumns(#"Personalização Adicionada",{"sku_key", "id", "titulo", "codigoPai", "marca", "ncm", "altura", "largura", "profundidade", "medida", "ean", "status", "categoria", "subcategoria", "sku", "loja", "integradora", "peso", "estoqueReal"})
+in
+    #"Colunas Reordenadas"
+
+let
+    Fonte = Odbc.DataSource("dsn=PostgreSQL30", [HierarchicalNavigation=true]),
+    edigitalDb_Database = Fonte{[Name="edigitalDb",Kind="Database"]}[Data],
+    public_Schema = edigitalDb_Database{[Name="public",Kind="Schema"]}[Data],
+    cotacao_Table = public_Schema{[Name="cotacao",Kind="Table"]}[Data],
+    #"Personalização Adicionada" = Table.AddColumn(cotacao_Table, "pedido_key", each [pedidoIdPedido]&"_"&[pedidoLoja]&"_"&[pedidoIntegradora]),
+    #"Colunas Reordenadas" = Table.ReorderColumns(#"Personalização Adicionada",{"pedido_key", "id", "prazoTransportadora", "prazoLoja", "prazoAdcional", "prazoTotal", "pedidoIdPedido", "pedidoLoja", "pedidoIntegradora", "idCotacao", "pedido"})
+in
+    #"Colunas Reordenadas"
+
+(texto as text) =>
+let
+    ComAcentos = Text.ToList("àáâãäèéêëìíîïòóôõöùúûüÀÁÂÃÄÈÉÊËÌÍÎÒÓÔÕÖÙÚÛÜçÇñÑ"),
+    SemAcentos = Text.ToList("aaaaaeeeeiiiiooooouuuuAAAAAEEEEIIIOOOOOUUUUcCnN"),
+    ParesAcentos = List.Zip({ComAcentos, SemAcentos}),
+    TextoQuebrado = Text.ToList(texto),
+    Substituicao = List.ReplaceMatchingItems(TextoQuebrado, ParesAcentos),
+    Resultado = Text.Combine(Substituicao)
+in
+    Resultado
+
+Calendário = 
+    var dataminima = DATE(YEAR(MIN(pedido[dataPedido])),1,1)
+    var datamaxima = DATE(YEAR(MAX(pedido[dataPedido])),12,31)
+    return 
+    CALENDAR(dataminima,datamaxima)
+    #"Personalização Adicionada"
