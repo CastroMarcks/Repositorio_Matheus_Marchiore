@@ -1,0 +1,93 @@
+# Códigos Colunas Calculadas Projeto Metas (calendário)
+
+***Descrição do código***
+
+<aside>
+💡
+
+</aside>
+
+```r
+//
+DiaSemana = WEEKDAY('Calendário'[Date],1)
+
+//
+média de vendas = CALCULATE([Mgeral],FILTER(pedido,DATE(YEAR(pedido[dataPedido]),MONTH(pedido[dataPedido]),DAY(pedido[dataPedido]))>=DATE(2023,02,01)&&
+                        NOT(pedido[statusPedido]in{"Cancelado", "Novo", "Cancelado Retornando"})&&
+                        NOT(pedido[loja]in{"Lojas MM","Ta barato"})))
+
+//
+média diária = AVERAGEX(SUMMARIZE(
+                    FILTER(
+                        ALL(pedido),EOMONTH(pedido[dataPedido],0)=EOMONTH('Calendário'[Date],0)),
+                    pedido[dataPedido],
+                    "Toatal dia", SUM(pedido[total venda ajustado])
+                    ), [Toatal dia])
+
+//
+Media mês atual = IF('Calendário'[Date] < TODAY(), 0,CALCULATE([Mgeral],FILTER(pedido,DATE(YEAR(pedido[dataPedido]),MONTH(pedido[dataPedido]),DAY(pedido[dataPedido]))>=EOMONTH(TODAY(),-2) &&
+                        NOT(pedido[statusPedido]in{"Cancelado", "Novo", "Cancelado Retornando"})&&
+                        NOT(pedido[loja]in{"Lojas MM","Ta barato"}))))
+
+//
+mês = 'Calendário'[Date].[Mês]
+
+//
+Previsão de venda = 
+// Previsão com base na média histórica.
+'Calendário'[média de vendas]+('Calendário'[média de vendas]*'Calendário'[Varição do dia])+('Calendário'[média de vendas]*'Calendário'[Variação do quarter])
+
+//"Previsão com base na média do mês"
+Previsão de venda mês = 
+// Previsão com base na média mês.
+'Calendário'[Media mês atual]+('Calendário'[Media mês atual]*'Calendário'[Varição do dia])+('Calendário'[Media mês atual]*'Calendário'[Variação do quarter])
+
+//
+PrimeiroDiaMes = WEEKDAY(DATE(YEAR('Calendário'[Date]), MONTH('Calendário'[Date]), 1))
+
+//
+Quarter = CEILING(DAY('Calendário'[Date]) /7.75,1)
+
+//
+semana = WEEKNUM('Calendário'[Date])
+
+//
+Variação do quarter = 
+VAR FiltroPedidos =
+    FILTER(
+        pedido,
+        DATE(YEAR(pedido[dataPedido]), MONTH(pedido[dataPedido]), DAY(pedido[dataPedido])) >= DATE(2023, 02, 01) &&
+        NOT(pedido[statusPedido] IN {"Cancelado", "Novo", "Cancelado Retornando"}) &&
+        NOT(pedido[loja] IN {"Lojas MM", "Ta barato"})
+    )
+RETURN
+    SWITCH(
+        'Calendário'[Quarter],
+        1, CALCULATE([Quarter 01], FiltroPedidos),
+        2, CALCULATE([Quarter 02], FiltroPedidos),
+        3, CALCULATE([Quarter 03], FiltroPedidos),
+        4, CALCULATE([Quarter 04], FiltroPedidos)
+    )
+
+//
+Varição do dia = 
+VAR FiltroPedidos =
+    FILTER(
+        pedido,
+        DATE(YEAR(pedido[dataPedido]), MONTH(pedido[dataPedido]), DAY(pedido[dataPedido])) >= DATE(2023, 02, 01) &&
+        NOT(pedido[statusPedido] IN {"Cancelado", "Novo", "Cancelado Retornando"}) &&
+        NOT(pedido[loja] IN {"Lojas MM", "Ta barato"})
+    )
+RETURN
+    SWITCH(
+        WEEKDAY('Calendário'[Date]),
+        1, CALCULATE([Delt1], FiltroPedidos),
+        2, CALCULATE([Delt2], FiltroPedidos),
+        3, CALCULATE([Delt3], FiltroPedidos),
+        4, CALCULATE([Delt4], FiltroPedidos),
+        5, CALCULATE([Delt5], FiltroPedidos),
+        6, CALCULATE([Delt6], FiltroPedidos),
+        7, CALCULATE([Delt7], FiltroPedidos)
+    
+
+```
