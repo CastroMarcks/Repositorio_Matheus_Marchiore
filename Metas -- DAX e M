@@ -1,0 +1,157 @@
+
+//"Cálculo do acumulado do quarto, esssa dax serve para calcular o quanto já foi vendido ao longo do quarto"
+Acumulado do quarto = 
+CALCULATE(
+    SUM(pedido[total venda ajustado]), FILTER(pedido, MONTH(pedido[dataPedido]) = MONTH(TODAY()) && 
+    pedido[Semana atual] = [Quarter atual]
+)
+)
+
+//"Cálculo de contagem geral, esssa dax serve para calcular a quantidade de dias passados desde 01 de fevereiro de 2023 atéa agora"
+Contagem geral = CALCULATE(
+                    COUNTROWS('Calendário'),
+                           FILTER('Calendário', 'Calendário'[Date] >= DATE(2023,02,01) && 'Calendário'[Date] <= DATE(YEAR(TODAY()),MONTH(TODAY())-1,30))
+                        )
+//"Cálculo de peso do dia da semana, esssa dax serve para calcular a variação com a média de cada dia da semana, sendo domingo 1 e sábado 7"
+Delt1 = -([Mgeral] - (CALCULATE(DIVIDE([Soma geral],[Contagem geral]),FILTER('Calendário', 'Calendário'[DiaSemana]= 1 ))))/[Mgeral]
+Delt2 = -([Mgeral] - (CALCULATE(DIVIDE([Soma geral],[Contagem geral]),FILTER('Calendário', 'Calendário'[DiaSemana]= 2 ))))/[Mgeral]
+Delt3 = -([Mgeral] - (CALCULATE(DIVIDE([Soma geral],[Contagem geral]),FILTER('Calendário', 'Calendário'[DiaSemana]= 3 ))))/[Mgeral]
+Delt4 = -([Mgeral] - (CALCULATE(DIVIDE([Soma geral],[Contagem geral]),FILTER('Calendário', 'Calendário'[DiaSemana]= 4 ))))/[Mgeral]
+Delt5 = -([Mgeral] - (CALCULATE(DIVIDE([Soma geral],[Contagem geral]),FILTER('Calendário', 'Calendário'[DiaSemana]= 5 ))))/[Mgeral]
+Delt6 = -([Mgeral] - (CALCULATE(DIVIDE([Soma geral],[Contagem geral]),FILTER('Calendário', 'Calendário'[DiaSemana]= 6 ))))/[Mgeral]
+Delt7 = -([Mgeral] - (CALCULATE(DIVIDE([Soma geral],[Contagem geral]),FILTER('Calendário', 'Calendário'[DiaSemana]= 7 ))))/[Mgeral]
+
+//"Retonba a data de hoje"
+Dia_de_hoje = TODAY()
+
+//"Cálculo de contagem de dias que tem no quarto atual"
+Dias do quarto = 
+CALCULATE(
+    DISTINCTCOUNT('Calendário'[Date]),FILTER('Calendário',
+     YEAR('Calendário'[Date])=YEAR(TODAY()) && MONTH('Calendário'[Date]) = MONTH(TODAY()) && 'Calendário'[Quarter] = CEILING(DAY(TODAY()) / 7.5, 1)
+)
+)
+
+//"Dias restantes para o fim do mês"
+dias_restantes = CEILING(EOMONTH(TODAY(),0) - TODAY(),1)
+
+//"Calcula o a diferença entre oque vendemos e oque temos que vender"
+Gap de vendas do quarto = [Medida 6]-[Acumulado do quarto]
+
+//"Verifica o peso do dia atual, com base na escolha dos deltas"
+Hoje = SWITCH(WEEKDAY(TODAY()),1,[Delt1], 2,[Delt2],3,[Delt3],4,[Delt4],5,[Delt5],6,[Delt6],7,[Delt7],BLANK())
+
+//"Cálcula a média geral de vendas até o dia de hoje"
+Média de vendas = DIVIDE([Vendas acumuladas],[Total de dias acumulado no periodo])
+
+//"Cálcula a média de vendas apartir de 01/02/2023"
+MediaVendasFiltrada = 
+    CALCULATE(
+        AVERAGE(pedido[total venda ajustado]),
+        FILTER(
+            pedido,
+            pedido[dataPedido] >= DATE(2022, 1, 1) && pedido[dataPedido] <= DATE(2022, 12, 31)
+        )
+    )
+
+
+//"Verifica qual quarto de hoje"
+Verifica qual quarto = (CEILING(DAY(TODAY()) / 7.75, 1)
+)
+Quarter atual = CEILING(DAY(TODAY()) / 7.5, 1)
+
+
+//"Cálcula a média geral de vendas até o dia de hoje"
+Mgeral = [Soma geral]/[Contagem geral]
+
+//"Cálcula em porcentagem o quanto distante da meta estamos"
+Percentaul de Gap = DIVIDE([Gap de vendas do quarto],Metas[Medida 6])
+
+//"Cálcula em porcentagem da meta alcançada até o momento"
+Percentual atingido da meta do quarto = DIVIDE([Acumulado do quarto],Metas[Medida 6])
+
+//"Cálcula o peso do dia com base nos pesos dos quartos e dos dias da semana"
+Peso dia = (([PesoSemana]*SUM(Metas[Meta Maio 23])/[Dias do quarto])*(1+[Hoje]))
+
+//"Calcula o peso do quarter atual"
+PesoSemana = SWITCH([Quarter atual],
+ 1,DIVIDE(CALCULATE([Vendas acumuladas],'Calendário'[Quarter]=1),[Vendas acumuladas]),
+ 2,DIVIDE(CALCULATE([Vendas acumuladas],'Calendário'[Quarter]=2),[Vendas acumuladas]),
+ 3,DIVIDE(CALCULATE([Vendas acumuladas],'Calendário'[Quarter]=3),[Vendas acumuladas]),
+ 4,DIVIDE(CALCULATE([Vendas acumuladas],'Calendário'[Quarter]=4),[Vendas acumuladas]),
+ BLANK())
+//"Calcula o peso de cada quarter atual"
+Quarter 01 = 
+-([Mgeral] - CALCULATE(
+    DIVIDE([Soma geral], [Contagem geral]),
+    FILTER('Calendário', 'Calendário'[Quarter] = 1)
+)) / [Mgeral]
+
+Quarter 02 = 
+-([Mgeral] - CALCULATE(
+    DIVIDE([Soma geral], [Contagem geral]),
+    FILTER('Calendário', 'Calendário'[Quarter] = 2)
+)) / [Mgeral]
+
+Quarter 03 = 
+-([Mgeral] - CALCULATE(
+    DIVIDE([Soma geral], [Contagem geral]),
+    FILTER('Calendário', 'Calendário'[Quarter] = 3)
+)) / [Mgeral]
+
+Quarter 04 = 
+-([Mgeral] - CALCULATE(
+    DIVIDE([Soma geral], [Contagem geral]),
+    FILTER('Calendário', 'Calendário'[Quarter] = 4)
+)) / [Mgeral]
+
+
+//"Cálculo das vendas até o dia atual"
+Soma geral = CALCULATE(
+                    SUM(pedido[total venda ajustado]),
+                    FILTER(pedido, pedido[dataPedido] >= DATE(2023,02,01) &&
+                            pedido[dataPedido] <= DATE(YEAR(TODAY()),MONTH(TODAY())-1,30))
+                        )
+
+//"Cálculo de contagem de dias que tem no quarto atual"
+Total de dias acumulado no periodo = 
+COUNTROWS(
+    FILTER(
+        'Calendário',
+        'Calendário'[Date] >= DATE(2023, 2, 1) &&
+        'Calendário'[Date] <= EOMONTH(TODAY(), -1)
+    )
+)
+
+//"Cálculo das vendas até o dia atual"
+Vendas acumuladas = 
+CALCULATE(
+    SUM(pedido[total venda ajustado]),
+    FILTER(
+        pedido,
+        pedido[dataPedido] >= DATE(2023, 2, 1) && pedido[dataPedido] <= EOMONTH(TODAY(), -1)
+    )
+)
+
+
+número de dias = DATEDIFF(EOMONTH(TODAY(), -1), TODAY(),DAY)
+
+//"Total Acumulado do mês"
+Venda no mes = CALCULATE(
+                    SUM(pedido[total venda ajustado]),
+                    DATESBETWEEN(pedido[dataPedido],DATE(YEAR(TODAY()),MONTH(TODAY()),1),TODAY()))
+//"Cálculo da previsão para o mes considerando o peso de cada dia e quarter"
+
+previsão de vendas para o mês = [Acumulado do mês]+CALCULATE(SUM('Calendário'[Previsão de venda])
+																	,FILTER('Calendário','Calendário'[Date]>= [Hoje] && 'Calendário'[Date]<= EOMONTH(TODAY(),0)))
+
+//"Cálcula a média do mês"
+Média no Mês = DIVIDE([Venda no mes],[número de dias])
+
+//"Previsão do mês"
+previsão de vendas para o mês = [Venda no mes] + CALCULATE(SUM('Calendário'[Previsão de venda]),
+                                                                FILTER('Calendário','Calendário'[Date]>=    TODAY() && 'Calendário'[Date]<= EOMONTH(TODAY(),0)))
+
+//"Vendas no dia anterior"
+Vendas dia anterior = 
+CALCULATE(SUM(pedido[Total venda ajustado]), pedido[dataPedido] = (TODAY() - 1))
