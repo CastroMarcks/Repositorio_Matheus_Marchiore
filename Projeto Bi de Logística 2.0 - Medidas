@@ -1,0 +1,78 @@
+  A[Coluna Entregas]--> 1[ ];
+	A --> 2[2_Nº_Pedidos_Pendentes_Atrazados];
+	A --> 3[3_Nº_Pedidos_Pendentes_No_Prazo];
+	A --> 4[4_Nº_Pedidos_Sem_Previsão];
+	A --> 5[5_Nº_Pedidos_Entregue_em_Atrazo];
+	A --> 6[6_Nº_Pedidos_Pendentes_No_Prazo];
+	A[Coluno enregas] --> 7[7_Nº_Pedidos_Previstos_Mês_Atual]
+	2-->8[1_SLA_Pedidos_Entregues];
+	3-->8
+  
+
+"calculando a quantidade total de pedido"
+Qte_T = CALCULATE(COUNTROWS(pedido),
+									FILTER(pedido, pedido[dataEntrega].[Date]<pedido[previsaoEntrega].[Date]),
+									pedido[statusPedido] = "entrgegue")
+"calculando a aquntidade de pedido entregue"
+Qte_T = CALCULATE(COUNTROWS(pedido),
+									FILTER(pedido, pedido[dataEntrega].[Date]<pedido[previsaoEntrega].[Date]),
+									pedido[statusPedido] = "entrgegue")
+
+
+
+Qte_T = Qte_D + Qte_F
+ 
+"cálculo dos SLA dentro do prasol"
+
+SLA_D =  (Qte_D/Qte_T)
+// Essa coluna cálcula o gap de dias entre a data da entrega e a data da previsão de entrega
+
+= Table.AddColumn(#"Colunas Reordenadas", "Subtração", 
+each Duration.Days( [dataprevisaoEntrega]-[dataEntrega]), Int64.Type)
+
+// Essla coluna nos fornece o status lgístico do pedido de acordo com a tada da entrega,
+// o status do pedido, o dia de hoje e a previsão de entrega 
+
+= Table.AddColumn(#"Colunas Reordenadas1", "Entregas",
+each if [statusPedido] = "Cancelado" or [statusPedido] = "Cancelado Retornando" then "Cancelado"  
+else if [statusPedido] = "Entregue" and [Subtração] < 0 then "Entregue em atraso"
+else if [statusPedido] = "Entregue" and [Subtração] >= 0 then "Entregue no prazo"
+else if [dataprevisaoEntrega] = null then  "Sem previsão"
+else if [dataEntrega] = null and Date.From([dataprevisaoEntrega]) < Date.From(DateTime.LocalNow()) 
+then "Pendente em atraso"
+else if [dataEntrega] = null and Date.From([dataprevisaoEntrega]) >= Date.From(DateTime.LocalNow()) 
+then "Pendente no prazo"
+else "Sem informação")
+
+//Contagem de pedidos pendentes em atrazo:
+
+2_Nº_Pedidos_Pendentes_Atrazados = CALCULATE(COUNTROWS(pedido), pedido[Entregas] = "Pendente em atraso")
+
+//Contagem de pedidos Pendente no prazo:
+3_Nº_Pedidos_Pendentes_No_Prazo = CALCULATE(COUNTROWS(pedido), pedido[Entregas] = "Pendente no prazo")
+
+//Contagem de pedidos Sem previsão:
+4_Nº_Pedidos_Sem_Previsão = CALCULATE(COUNTROWS(pedido), pedido[Entregas] = "Sem previsão")
+
+//Contagem de pedidos Entregue em atraso:
+5_Nº_Pedidos_Entregue_em_Atrazo = CALCULATE(COUNTROWS(pedido), pedido[Entregas] = "Entregue em atraso")
+
+//Contagem de pedidos Entregue no prazo:
+6_Nº_Pedidos_Entrgues_No_Prazo = CALCULATE(COUNTROWS(pedido), pedido[Entregas] = "Entregue no prazo")
+
+// Conta a quantidade total de pedidos previstos para o mês atual que estamos
+7_Nº_Pedidos_Previstos_MTD = CALCULATE(COUNTROWS(pedido),
+                                 FILTER(pedido, YEAR(pedido[dataprevisaoEntrega])=YEAR(TODAY())
+                                 && MONTH(pedido[dataprevisaoEntrega])=MONTH(TODAY())),
+                                 DAY(pedido[dataprevisaoEntrega])<DAY(TODAY()))
+
+//Conta a quantidade de pedidos com presvisão de entrega para o mês atual e que foram efetivamente entregues no prazo
+8_Nº_Pedidos_Previstos_MTD_Entregue = CALCULATE(COUNTROWS(pedido), 
+                  YEAR(pedido[dataprevisaoEntrega]) =YEAR(TODAY()),
+                  MONTH(pedido[dataprevisaoEntrega]) =MONTH(TODAY()),
+                  pedido[Entregas] = "Entregue no prazo", DAY(pedido[dataprevisaoEntrega])<DAY(TODAY())
+
+
+//Calcula a porcentagem de pedidos que deveriam ser entregues no mê e realmente foram
+9_SLA_Pedidos_Entregues = DIVIDE([2_Nº_Pedidos_Pendentes_Atrazados]+[5_Nº_Pedidos_Entregue_em_Atrazo],[7_Nº_Pedidos_Previstos_MTD])
+)
