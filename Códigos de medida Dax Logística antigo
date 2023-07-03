@@ -1,0 +1,1191 @@
+
+//
+% médio 
+de frete mês = 
+CALCULATE(
+    AVERAGE(pedido[% frete mês]),
+    pedido[Mês] = "março")
+
+//
+1-MonthSales = 
+CALCULATE(
+    SUM(pedido[total venda ajustado]),
+    FILTER(
+        pedido,
+        AND(
+            pedido[dataAprovacao]
+            >= DATE (YEAR(TODAY()),MONTH(TODAY())-1,1),
+            pedido[dataAprovacao]
+            <= DATE(YEAR(TODAY()),MONTH(TODAY())-1,DAY(TODAY()-1)))))
+
+
+
+//
+Aguardando coleta = CALCULATE(
+    COUNT(pedido[statusPedido]),
+    FILTER(pedido, pedido[statusPedido] in {"Faturado"})
+)
+
+
+
+//
+AnteriorSLA% = DIVIDE('Medidas'[MêsAnteriorSLA], 'Medidas'[TotalMêsAnteriorSLA])
+
+
+//
+Atingimento Geral = 
+CALCULATE(
+    DIVIDE([Vendas], [Total meta março 23])
+)
+
+
+//
+Atingimento março 23 = 
+CALCULATE(
+    DIVIDE([Vendas],[Total meta março 23])
+)
+
+//
+Atrasos D-60 = 
+CALCULATE(
+    AVERAGE(pedido[EntregaRealizada]),
+    pedido[AtrasosTabelaVerdade] = "Atraso",
+    DATESINPERIOD(pedido[dataEntrega].[Date], (TODAY()-30),-30,DAY),
+    pedido[statusPedido] = "Entregue")
+
+//
+AtualSLA% = DIVIDE('Medidas'[MêsAtualSLA], 'Medidas'[TotalMêsAtualSLA])
+
+//CanceladosAprovados = 
+
+VAR filtro_data_pedido = 
+        FILTER(
+            pedido,
+            AND(
+            pedido[dataPedido]
+            >= DATE(YEAR(TODAY()),MONTH(TODAY()),1),
+            pedido[dataPedido]
+            <= DATE(YEAR(TODAY()),MONTH(TODAY()),DAY(TODAY()))))
+
+VAR filtro_aprovacao = 
+        FILTER(
+            pedido,
+            AND(
+            pedido[dataAprovacao]
+            >= DATE(YEAR(TODAY()),MONTH(TODAY()),1),
+            pedido[dataAprovacao]
+            <= DATE(YEAR(TODAY()),MONTH(TODAY()),DAY(TODAY()))))
+
+VAR cancelados_ = 
+    CALCULATE(
+        SUM(
+            pedido[total venda ajustado]),
+        FILTER(
+            pedido, pedido[statusPedido] = "Cancelado"),
+            filtro_data_pedido,
+            filtro_aprovacao)
+
+VAR devolvendo_ = 
+    CALCULATE(
+        SUM(
+            pedido[total venda ajustado]),
+        FILTER(
+            pedido, pedido[statusPedido] = "Cancelado Retornando"),
+            filtro_data_pedido,
+            filtro_aprovacao)
+
+VAR total_vendas_cancelados = cancelados_ + devolvendo_
+
+RETURN
+    total_vendas_cancelados
+
+
+//
+CanceladosAprovados = 
+
+VAR filtro_data_pedido = 
+        FILTER(
+            pedido,
+            AND(
+            pedido[dataPedido]
+            >= DATE(YEAR(TODAY()),MONTH(TODAY()),1),
+            pedido[dataPedido]
+            <= DATE(YEAR(TODAY()),MONTH(TODAY()),DAY(TODAY()))))
+
+VAR filtro_aprovacao = 
+        FILTER(
+            pedido,
+            AND(
+            pedido[dataAprovacao]
+            >= DATE(YEAR(TODAY()),MONTH(TODAY()),1),
+            pedido[dataAprovacao]
+            <= DATE(YEAR(TODAY()),MONTH(TODAY()),DAY(TODAY()))))
+
+VAR cancelados_ = 
+    CALCULATE(
+        SUM(
+            pedido[total venda ajustado]),
+        FILTER(
+            pedido, pedido[statusPedido] = "Cancelado"),
+            filtro_data_pedido,
+            filtro_aprovacao)
+
+VAR devolvendo_ = 
+    CALCULATE(
+        SUM(
+            pedido[total venda ajustado]),
+        FILTER(
+            pedido, pedido[statusPedido] = "Cancelado Retornando"),
+            filtro_data_pedido,
+            filtro_aprovacao)
+
+VAR total_vendas_cancelados = cancelados_ + devolvendo_
+
+RETURN
+    total_vendas_cancelados
+
+
+//CanceladosAprovadosGeral = 
+
+VAR cancelados = 
+CALCULATE(
+    SUM(
+        pedido[total venda ajustado]),
+    pedido[statusPedido] = "Cancelado",
+    DATESBETWEEN(pedido[dataPedido].[Date], dt"2022-01-01", TODAY()),
+    DATESBETWEEN(pedido[dataAprovacao].[Date], dt"2022-01-01", TODAY())
+)
+
+VAR devolvendo = 
+CALCULATE(
+    SUM(
+        pedido[total venda ajustado]),
+    pedido[statusPedido] = "Cancelado Revolvendo",
+    DATESBETWEEN(pedido[dataPedido].[Date], dt"2022-01-01", TODAY()),
+    DATESBETWEEN(pedido[dataAprovacao].[Date], dt"2022-01-01", TODAY())
+)
+
+VAR total_vendas_cancelados = cancelados + devolvendo
+
+RETURN
+    total_vendas_cancelados
+
+//
+CanceladosXFaturamento = DIVIDE([CanceladosAprovados], [Vendas])
+
+//
+D+0 = 
+
+VAR Aprovado = 
+CALCULATE(
+    COUNT(pedido[RegraDiasRestantes]),
+    pedido[RegraDiasRestantes] = "D+0",
+    pedido[dataAprovacao] >= dt"2021-12-31",
+    pedido[statusPedido] = "Aprovado"
+)
+
+VAR EmViagem = 
+CALCULATE(
+    COUNT(pedido[RegraDiasRestantes]),
+    pedido[RegraDiasRestantes] = "D+0",
+    pedido[dataAprovacao] >= dt"2021-12-31",
+    pedido[statusPedido] = "Em viagem"
+)
+
+VAR Enviado = 
+CALCULATE(
+    COUNT(pedido[RegraDiasRestantes]),
+    pedido[RegraDiasRestantes] = "D+0",
+    pedido[dataAprovacao] >= dt"2021-12-31",
+    pedido[statusPedido] = "Enviado"
+)
+
+VAR Faturado = 
+CALCULATE(
+    COUNT(pedido[RegraDiasRestantes]),
+    pedido[RegraDiasRestantes] = "D+0",
+    pedido[dataAprovacao] >= dt"2021-12-31",
+    pedido[statusPedido] = "Faturado"
+)
+
+VAR d0 =
+Aprovado + EmViagem + Enviado + Faturado
+
+RETURN
+    d0
+
+
+//
+D+1 = 
+
+VAR Aprovado = 
+CALCULATE(
+    COUNT(pedido[PrevisãoAtrasos]),
+    pedido[RegraDiasRestantes] = "D+1",
+    pedido[statusPedido] = "Aprovado",
+    pedido[dataAprovacao] >= dt"2021-12-31"
+)
+
+VAR EmViagem = 
+CALCULATE(
+    COUNT(pedido[PrevisãoAtrasos]),
+    pedido[RegraDiasRestantes] = "D+1",
+    pedido[statusPedido] = "Em viagem",
+    pedido[dataAprovacao] >= dt"2021-12-31"
+)
+
+VAR Enviado = 
+CALCULATE(
+    COUNT(pedido[PrevisãoAtrasos]),
+    pedido[RegraDiasRestantes] = "D+1",
+    pedido[statusPedido] = "Enviado",
+    pedido[dataAprovacao] >= dt"2021-12-31"
+)
+
+VAR Faturado = 
+CALCULATE(
+    COUNT(pedido[PrevisãoAtrasos]),
+    pedido[RegraDiasRestantes] = "D+1",
+    pedido[statusPedido] = "Faturado",
+    pedido[dataAprovacao] >= dt"2021-12-31"
+)
+
+VAR d1 =
+Aprovado + EmViagem + Enviado + Faturado
+
+RETURN
+    d1
+
+//
+D+10 = 
+
+VAR Aprovado = 
+CALCULATE( 
+    COUNT(pedido[PrevisãoAtrasos]), 
+    pedido[RegraDiasRestantes] = "D+10", 
+    pedido[statusPedido] = "Aprovado", 
+    pedido[dataAprovacao] >= dt"2021-12-23"
+)
+
+VAR EmViagem = 
+CALCULATE(
+    COUNT(pedido[PrevisãoAtrasos]),
+    pedido[RegraDiasRestantes] = "D+10",
+    pedido[statusPedido] = "Em viagem",
+    pedido[dataAprovacao] >= dt"2021-12-31"
+)
+
+VAR Enviado = 
+CALCULATE(
+    COUNT(pedido[PrevisãoAtrasos]),
+    pedido[RegraDiasRestantes] = "D+10",
+    pedido[statusPedido] = "Enviado",
+    pedido[dataAprovacao] >= dt"2021-12-31"
+)
+
+VAR Faturado = 
+CALCULATE(
+    COUNT(pedido[PrevisãoAtrasos]),
+    pedido[RegraDiasRestantes] = "D+10",
+    pedido[statusPedido] = "Faturado",
+    pedido[dataAprovacao] >= dt"2021-12-31"
+)
+
+VAR d10 =
+Aprovado + EmViagem + Enviado + Faturado
+
+RETURN
+    d10
+
+
+//
+D+2 = 
+
+VAR Aprovado = 
+CALCULATE(
+    COUNT(pedido[PrevisãoAtrasos]),
+    pedido[RegraDiasRestantes] = "D+2",
+    pedido[statusPedido] = "Aprovado",
+    pedido[dataAprovacao] >= dt"2021-12-31"
+)
+
+VAR EmViagem = 
+CALCULATE(
+    COUNT(pedido[PrevisãoAtrasos]),
+    pedido[RegraDiasRestantes] = "D+2",
+    pedido[statusPedido] = "Em viagem",
+    pedido[dataAprovacao] >= dt"2021-12-31"
+)
+
+VAR Enviado = 
+CALCULATE(
+    COUNT(pedido[PrevisãoAtrasos]),
+    pedido[RegraDiasRestantes] = "D+2",
+    pedido[statusPedido] = "Enviado",
+    pedido[dataAprovacao] >= dt"2021-12-31"
+)
+
+VAR Faturado = 
+CALCULATE(
+    COUNT(pedido[PrevisãoAtrasos]),
+    pedido[RegraDiasRestantes] = "D+2",
+    pedido[statusPedido] = "Faturado",
+    pedido[dataAprovacao] >= dt"2021-12-31"
+)
+
+VAR d2 =
+Aprovado + EmViagem + Enviado + Faturado
+
+RETURN
+    d2
+
+//
+D+3 = 
+
+VAR Aprovado = 
+CALCULATE(
+    COUNT(pedido[PrevisãoAtrasos]),
+    pedido[RegraDiasRestantes] = "D+3",
+    pedido[statusPedido] = "Aprovado",
+    pedido[dataAprovacao] >= dt"2021-12-31"
+)
+
+VAR EmViagem = 
+CALCULATE(
+    COUNT(pedido[PrevisãoAtrasos]),
+    pedido[RegraDiasRestantes] = "D+3",
+    pedido[statusPedido] = "Em viagem",
+    pedido[dataAprovacao] >= dt"2021-12-31"
+)
+
+VAR Enviado = 
+CALCULATE(
+    COUNT(pedido[PrevisãoAtrasos]),
+    pedido[RegraDiasRestantes] = "D+3",
+    pedido[statusPedido] = "Enviado",
+    pedido[dataAprovacao] >= dt"2021-12-31"
+)
+
+VAR Faturado = 
+CALCULATE(
+    COUNT(pedido[PrevisãoAtrasos]),
+    pedido[RegraDiasRestantes] = "D+3",
+    pedido[statusPedido] = "Faturado",
+    pedido[dataAprovacao] >= dt"2021-12-31"
+)
+
+VAR d3 =
+Aprovado + EmViagem + Enviado + Faturado
+
+RETURN
+    d3
+
+//
+DeltaSales = 'Medidas'[Sales1]-'Medidas'[Sales2]
+
+//
+Diferença fevereiro 23 = 
+CALCULATE(
+    [Vendas] - [Total meta março 23]
+)
+
+
+//
+Diff_vendas = [Vendas] - [Vendas mês anterior]
+
+//
+DiffSLA% = 'Medidas'[AtualSLA%] - 'Medidas'[AnteriorSLA%]
+
+
+//
+DoD = [Total vendas geral] - [Vendas_Dia_Anterior]
+
+//
+DoD % = DIVIDE([DoD], [Vendas_Dia_Anterior])
+
+// 
+ExpediçãoMédia = 
+CALCULATE(
+    AVERAGE(
+        pedido[Tempo expedição]),
+    pedido[dataExpedicao] > dt"2021-12-31",
+    pedido[dataPedido] > dt"2021-12-31",
+    pedido[dataAprovacao] > dt"2021-12-31")
+
+
+//
+
+Giro 90 = IFERROR(
+AVERAGE(balance[estoqueReal]) / [Media 90], 0)
+
+
+// 
+Media 90 = CALCULATE(
+     AVERAGE('item'[quantidade]),DATESBETWEEN(pedido[dataPedido], TODAY() -91,TODAY()-1)
+)
+
+//
+
+Média Atraso Expedição = 
+CALCULATE(
+    AVERAGE(
+        pedido[ExpediçãoRealizada]),
+        pedido[regra expedição] = "expedição atrsada",
+    pedido[dataExpedicao] > dt"2021-12-31"
+)
+
+
+//
+Média de vendas = AVERAGE(pedido[total venda ajustado])
+
+
+//
+MédiaExpedição D-30 = 
+CALCULATE(
+    AVERAGE(
+        pedido[Tempo expedição]),
+    DATESBETWEEN(
+        pedido[dataExpedicao].[Date],
+        (TODAY()-30),
+        TODAY())
+)
+
+
+MédiaExpedição MoM = 
+DIVIDE([MédiaExpedição D-30], [MédiaExpediçãoPeríodoAnterior])-1
+
+//
+
+MédiaExpediçãoPeríodoAnterior = 
+CALCULATE(
+    AVERAGE(
+        pedido[Tempo expedição]),
+    DATESBETWEEN(
+        pedido[dataExpedicao].[Date],
+        (TODAY()-60),
+        (TODAY()-30))
+)
+
+MêsAnteriorSLA = 
+CALCULATE(
+    COUNT(pedido[Regra atrasos]), 
+    FILTER(
+        pedido, pedido[Regra atrasos] = "Dentro do Prazo"),
+    FILTER(
+            pedido, pedido[statusPedido] = "Entregue"),
+    FILTER(
+        pedido,
+        AND(
+            pedido[dataEntrega]
+            >= DATE (YEAR(TODAY()),MONTH(TODAY())-1,1),
+            pedido[dataEntrega]
+            <= DATE(YEAR(TODAY()),MONTH(TODAY())-1,DAY(TODAY())))))
+
+//
+MêsAtualSLA = 
+CALCULATE(
+    COUNT(pedido[Regra atrasos]), 
+    FILTER(
+        pedido, pedido[Regra atrasos] = "Dentro do Prazo"),
+    FILTER(
+            pedido, pedido[statusPedido] = "Entregue"),
+    FILTER(
+        pedido,
+        AND(
+            pedido[dataEntrega]
+            >= DATE (YEAR(TODAY()),MONTH(TODAY()),1),
+            pedido[dataEntrega]
+            <= DATE(YEAR(TODAY()),MONTH(TODAY()),DAY(TODAY())))))
+
+//
+Meta SLA = 0.95
+
+//
+MoM % = DIVIDE([Variação mês],'Medidas'[Vendas mês anterior])
+
+//
+MoM % = DIVIDE([Variação mês],'Medidas'[Vendas mês anterior])
+
+//
+MoM MesmoPeríodo = DIVIDE([MonthSales],'Medidas'[1-MonthSales])-1
+
+//
+MonthSales = 
+CALCULATE(
+    SUM(pedido[total venda ajustado]),
+    FILTER(
+        pedido,
+        AND(
+            pedido[dataAprovacao]
+            >= DATE(YEAR(TODAY()),MONTH(TODAY()),1),
+            pedido[dataAprovacao]
+            <= DATE(YEAR(TODAY()),MONTH(TODAY()),DAY(TODAY()-1)))))
+
+//
+Num dia do mês = DAY(TODAY()-1)
+
+//
+Num dias no mês = DAY(EOMONTH(TODAY(),0))
+
+//
+Num dias no mês = DAY(EOMONTH(TODAY(),0))
+
+//
+PercentualAtrasos = 
+DIVIDE([Atrasos D-30], [Atrasos D-60])-1
+
+//
+PercentualCanceladosAprovadosGeral = 
+DIVIDE([CanceladosAprovadosGeral], [Vendas])
+
+//
+PercentualExpediçãoDentroDoPrazo = 
+CALCULATE(
+    DIVIDE([Qtd. expedição dentro do prazo],[Qtd.Expedição]))
+
+//
+Prazo Médio Entrega D-30 = 
+CALCULATE(
+    AVERAGE(
+        pedido[Prazo Entrega]),
+    DATESINPERIOD(
+        pedido[dataEntrega].[Date],TODAY(),-30,DAY),
+    pedido[statusPedido] = "Entregue"
+)
+
+//
+Prazo Médio Entrega D-60 = 
+CALCULATE(
+    AVERAGE(
+        pedido[Prazo Entrega]),
+    DATESINPERIOD(
+        pedido[dataEntrega].[Date],(TODAY()-30),-30,DAY),
+    pedido[statusPedido] = "Entregue"
+)
+
+//
+Prazo Médio Entrega MoM = 
+CALCULATE(
+    DIVIDE(
+        [Prazo Médio Entrega D-30],[Prazo Médio Entrega D-60])
+    -1)
+
+//
+PrazoEntregaAnterior = 
+CALCULATE(
+     'Medidas'[PrazoEntregaGeral],
+     PARALLELPERIOD(
+         'Calendar'[Date],-1
+         ,MONTH))
+
+//
+PrazoEntregaGeral = 
+CALCULATE(
+    AVERAGE(pedido[Tempo de entrega]),
+    FILTER(
+        pedido,
+        AND(
+            pedido[dataEntrega]
+            >= dt"2022-01-01",
+            pedido[dataEntrega]
+            <= TODAY()
+        )
+    )
+)
+
+
+//
+PrazoMoM% = DIVIDE([VariaçãoPrazo],'Medidas'[PrazoEntregaAnterior])
+
+//
+Preço médio = AVERAGE('item'[valorUnitario])
+
+//
+Previsão mês = ([Vendas] / [Num dia do mês] * 'Medidas'[Num dias no mês])
+
+//
+Qtd. Cancelados Aprovados = 
+
+VAR cancelados = 
+CALCULATE(
+    COUNT(
+        pedido[total venda ajustado]),
+    pedido[statusPedido] = "Cancelado",
+    DATESBETWEEN(pedido[dataPedido].[Date], dt"2022-01-01", TODAY()),
+    DATESBETWEEN(pedido[dataAprovacao].[Date], dt"2022-01-01", TODAY())
+)
+VAR cancelado_retornando = 
+CALCULATE(
+    COUNT(
+        pedido[total venda ajustado]),
+    pedido[statusPedido] = "Cancelado Retornando",
+    DATESBETWEEN(pedido[dataPedido].[Date], dt"2022-01-01", TODAY()),
+    DATESBETWEEN(pedido[dataAprovacao].[Date], dt"2022-01-01", TODAY())
+)
+
+VAR total_vendas_cancelados = cancelados + cancelado_retornando
+RETURN
+    total_vendas_cancelados
+
+//
+Qtd. Entregas = 
+CALCULATE(
+    COUNT(pedido[dataEntrega]),
+    pedido[dataEntrega] > dt"2021-12-31",
+    pedidoAtivo[statusPedido] = "Entregue")
+
+//
+Qtd. Entregas 15 = 
+CALCULATE(
+    COUNT(pedido[dataEntrega]),
+    DATESBETWEEN(pedido[dataEntrega].[Date],TODAY() -15, TODAY()),
+    pedido[statusPedido] = "Entregue"
+)
+
+//
+Qtd. Entregas Atraso = 
+CALCULATE(
+    COUNT(pedido[dataEntrega]),
+    pedido[dataEntrega] > dt"2021-12-31",
+    pedido[AtrasosTabelaVerdade] = "Atraso",
+    pedido[statusPedido] = "Entregue"
+)
+
+//
+Qtd. Entregas Dentro do Prazo = 
+CALCULATE(
+    COUNT(pedido[dataEntrega]),
+    pedido[dataEntrega] > dt"2021-12-31",
+    pedido[AtrasosTabelaVerdade] = "Dentro do Prazo",
+    pedido[statusPedido] = "Entregue"
+)
+
+//Qtd. Entregas Dentro do Prazo 15 = 
+CALCULATE(
+    COUNT(pedido[dataEntrega]),
+    DATESBETWEEN(pedido[dataEntrega].[Date],TODAY() -15, TODAY()),
+        pedido[AtrasosTabelaVerdade] = "Dentro do Prazo",
+        pedido[statusPedido] = "Entregue"
+    )
+
+//
+Qtd. expedição dentro do prazo = CALCULATE(
+    COUNT(pedido[regra expedição]),
+    pedido[regra expedição] = "expedição no prazo",
+    DATESBETWEEN('pedido'[dataPedido].[Date], TODAY()-31, TODAY()-1),  
+    USERELATIONSHIP('pedido'[idPedido], 'cotacao'[pedidoIdPedido]),
+    USERELATIONSHIP('pedido'[loja], 'cotacao'[pedidoLoja]
+    )
+)
+
+//
+Qtd. Pedidos Aguardando Expedição = 
+CALCULATE(
+    COUNT(pedido[statusPedido]),
+    pedido[statusPedido] IN {"Aprovado", "Faturado"},
+    pedido[dataPedido].[Date] > dt"2021-12-31"
+)
+
+//Qtd. total expedição = CALCULATE(
+    COUNT(pedido[regra expedição]),
+    DATESBETWEEN('pedido'[dataPedido].[Date], TODAY()-31, TODAY()-1))
+
+//
+Qtd.Expedição = 
+CALCULATE(
+    COUNT(
+        pedido[dataExpedicao]),
+    pedido[dataExpedicao] > dt"2021-12-31",
+    NOT(ISBLANK(pedido[dataExpedicao]))
+)
+
+//
+Qtd.ExpediçãoAtrasos = 
+CALCULATE(
+    COUNT(
+        pedido[regra expedição]),
+    NOT(
+        ISBLANK(
+            pedido[dataExpedicao])),
+        pedido[regra expedição] = "expedição atrasada",
+    pedido[dataExpedicao].[Date] > dt"2021-12-31"
+)
+
+//
+Qtd.ExpediçãoAtrasos D-30 = 
+CALCULATE(
+    COUNT(
+        pedido[regra expedição]),
+    NOT(
+        ISBLANK(
+            pedido[dataExpedicao].[Date])),
+        pedido[regra expedição] = "expedição atrasada",
+    DATESBETWEEN(
+        pedido[dataExpedicao].[Date],
+        (TODAY()-30),
+        TODAY()))
+
+//
+Qtd.Ped = DISTINCTCOUNT(pedido[idPedido])
+
+//
+Qtd.PedidosMktplace = DISTINCTCOUNT(pedido[idPedidoMarketplace])
+
+//
+Qtd.PrevAtrasos = 
+COUNT(pedido[PrevAtrasos])
+
+//
+Qtd.RupturaEstoque = 
+CALCULATE(
+    DISTINCTCOUNT(
+        'item'[sku]),
+    FILTER(
+        balance,
+        balance[RegraEstoque] = "Ruptura")
+)
+
+
+//
+Qtd1 = CALCULATE(COUNT(pedido[idPedido]), KEEPFILTERS(TREATAS(VALUES(Date1[dataPedido]), pedido[dataPedido])))
+
+//
+Qtd2 = CALCULATE(COUNT(pedido[idPedido]), KEEPFILTERS(TREATAS(VALUES(Date2[dataPedido]), pedido[dataPedido])))
+
+//
+quantidade nfs dia = CALCULATE(
+COUNT(pedido[numeroNF]),
+FILTER(pedido, pedido[dataEntrega].[Date] = (TODAY()-1)),pedido[statusPedido] = "Entregue"
+)
+
+//
+quantidade nfs mes = 
+CALCULATE(
+    COUNT(pedido[numeroNF]),
+    DATESBETWEEN(pedido[dataEntrega].[Date], TODAY() -30, TODAY()-1),
+    pedido[statusPedido] = "Entregue"
+)
+
+//
+quantidade nfs semana = 
+CALCULATE(
+    COUNT(pedido[numeroNF]),
+    DATESBETWEEN(pedido[dataEntrega].[Date], TODAY() -8, TODAY()-1),
+    pedido[statusPedido] = "Entregue"
+)
+
+//
+Sales1 = CALCULATE([Total vendas geral], KEEPFILTERS(TREATAS(VALUES(Date1[dataPedido]), pedido[dataPedido])))
+
+//
+Sales2 = CALCULATE([Total vendas geral], KEEPFILTERS(TREATAS(VALUES(Date2[dataPedido]), pedido[dataPedido])))
+
+//
+SalesWeek = 
+VAR periodo_venda = 
+FILTER(
+    pedido,
+    AND(
+        pedido[dataPedido]
+        >= (TODAY()-28),
+        pedido[dataPedido]
+        <= (TODAY()-1)
+    )
+)
+
+VAR periodo_aprovacao = 
+FILTER(
+    pedido,
+    AND(
+        pedido[dataAprovacao]
+        >= (TODAY()-28),
+        pedido[dataAprovacao]
+        <= (TODAY()-1)
+    )
+)
+
+VAR range_vendas = 
+CALCULATE(
+    SUM(
+        pedido[total venda ajustado]),
+        periodo_venda,
+        periodo_aprovacao)
+
+RETURN
+    range_vendas
+
+//
+ShareUF = 
+DIVIDE(
+    'Medidas'[MonthSales],
+    CALCULATE(
+        [MonthSales],
+        ALLSELECTED(pedido[uf])
+    )
+)
+
+//
+SLA 15 = DIVIDE(
+    [Qtd. Entregas Dentro do Prazo 15], [Qtd. Entregas 15])
+
+//
+SLA Aberto Dentro do Prazo % = 
+CALCULATE(
+    DIVIDE([SLA Aberto Qtd Dentro do Prazo], [SLA Aberto Qtd]))
+
+//
+SLA Aberto em viagem = 
+
+VAR EmViagem = 
+CALCULATE(
+    COUNT(pedido[statusPedido]),
+            pedido[statusPedido] = "Em Viagem",
+            pedido[dataAprovacao] >= dt"2021-12-31",
+            pedido[AtrasosTeste] = "Atraso"
+        )
+
+VAR NaoEntregues =
+EmViagem
+
+RETURN NaoEntregues
+
+//
+SLA Aberto Qtd = 
+
+VAR Aprovado = 
+CALCULATE(
+    COUNT(pedido[statusPedido]),
+    FILTER(
+        pedido,
+        AND(
+            pedido[statusPedido] = "Aprovado",
+            pedido[dataAprovacao].[Date] >= dt"2021-12-31"
+)))
+
+VAR EmViagem = 
+CALCULATE(
+    COUNT(pedido[statusPedido]),
+    FILTER(
+        pedido,
+        AND(
+            pedido[statusPedido] = "Em viagem",
+            pedido[dataAprovacao].[Date] >= dt"2021-12-31"
+)))
+
+VAR Enviado = 
+CALCULATE(
+    COUNT(pedido[statusPedido]),
+    FILTER(
+        pedido,
+        AND(
+            pedido[statusPedido] = "Enviado",
+            pedido[dataAprovacao].[Date] >= dt"2021-12-31"
+)))
+
+VAR Faturado = 
+CALCULATE(
+    COUNT(pedido[statusPedido]),
+    FILTER(
+        pedido,
+        AND(
+            pedido[statusPedido] = "Faturado",
+            pedido[dataAprovacao].[Date] >= dt"2021-12-31"
+)))
+
+
+VAR NaoEntregues =
+Aprovado + EmViagem + Enviado + Faturado
+
+RETURN
+    NaoEntregues
+
+//
+SLA Aberto Qtd Atrasos = 
+
+VAR Aprovado = 
+CALCULATE(
+    COUNT(pedido[statusPedido]),
+            pedido[statusPedido] = "Aprovado",
+            pedido[dataAprovacao] >= dt"2021-12-31",
+            pedido[AtrasosTeste] = "Atraso"
+        )
+
+VAR EmViagem = 
+CALCULATE(
+    COUNT(pedido[statusPedido]),
+            pedido[statusPedido] = "Em Viagem",
+            pedido[dataAprovacao] >= dt"2021-12-31",
+            pedido[AtrasosTeste] = "Atraso"
+        )
+
+VAR Enviado = 
+CALCULATE(
+    COUNT(pedido[statusPedido]),
+            pedido[statusPedido] = "Enviado",
+            pedido[dataAprovacao] >= dt"2021-12-31",
+            pedido[AtrasosTeste] = "Atraso"
+        )
+
+VAR Faturado = 
+CALCULATE(
+    COUNT(pedido[statusPedido]),
+            pedido[statusPedido] = "Faturado",
+            pedido[dataAprovacao] >= dt"2021-12-31",
+            pedido[AtrasosTeste] = "Atraso"
+        )
+
+VAR NaoEntregues =
+Aprovado + EmViagem + Enviado + Faturado
+
+RETURN NaoEntregues
+
+//
+SLA Aberto Qtd Dentro do Prazo = 
+
+VAR Aprovado = 
+CALCULATE(
+    COUNT(pedido[statusPedido]),
+            pedido[statusPedido] = "Aprovado",
+            pedido[dataAprovacao] >= dt"2021-12-31",
+            pedido[AtrasosTeste] = "Dentro do Prazo"
+)
+
+VAR EmViagem = 
+CALCULATE(
+    COUNT(pedido[statusPedido]),
+            pedido[statusPedido] = "Em Viagem",
+            pedido[dataAprovacao] >= dt"2021-12-31",
+            pedido[AtrasosTeste] = "Dentro do Prazo"
+)
+
+VAR Enviado = 
+CALCULATE(
+    COUNT(pedido[statusPedido]),
+            pedido[statusPedido] = "Enviado",
+            pedido[dataAprovacao] >= dt"2021-12-31",
+            pedido[AtrasosTeste] = "Dentro do Prazo"
+)
+
+VAR Faturado = 
+CALCULATE(
+    COUNT(pedido[statusPedido]),
+            pedido[statusPedido] = "Faturado",
+            pedido[dataAprovacao] >= dt"2021-12-31",
+            pedido[AtrasosTeste] = "Dentro do Prazo"
+)
+
+VAR NaoEntregues =
+Aprovado + EmViagem + Enviado + Faturado
+
+RETURN
+    NaoEntregues
+
+//
+SLA Atrasos = CALCULATE(COUNT(pedido[Regra atrasos]),FILTER(pedido, pedido[Regra atrasos] = "Atraso"))
+
+//
+SLA Atual = [SLA Aberto Qtd] + [SLA Fechado Qtd D-30]
+
+//
+SLA Atual Dentro do Prazo = 
+    [SLA Aberto Qtd Dentro do Prazo] + [SLA Fechado Qtd Dentro do Prazo D-30]
+
+//
+SLA Atual Dentro do Prazo % = 
+    DIVIDE([SLA Atual Dentro do Prazo], [SLA Atual])
+
+//SLA dentro do prazo = CALCULATE(COUNT(pedido[Regra atrasos]),FILTER(pedido, pedido[Regra atrasos] = "Dentro do Prazo"))
+
+//
+SLA entregues % = DIVIDE('Medidas'[SLA dentro do prazo], [SLA Total])
+
+//
+SLA expedição = DIVIDE([Qtd. expedição dentro do prazo], [Qtd. total expedição])
+
+//
+SLA Fechado Dentro do Prazo % = 
+CALCULATE(
+    DIVIDE([SLA Fechado Qtd Dentro do Prazo],[SLA Fechado Qtd]))
+
+//
+SLA Fechado Dentro do Prazo % D-30 = 
+CALCULATE(
+    DIVIDE([SLA Fechado Qtd Dentro do Prazo D-30], [SLA Fechado Qtd D-30]))
+
+//
+SLA Fechado Dentro do Prazo MoM D-30 = 
+CALCULATE(
+    DIVIDE(
+        [Variação SLA Fechado Qtd Dentro do Prazo D-30], [SLA Fechado Qtd Mês Anterior D-30]))
+
+//
+SLA Fechado Qtd = 
+
+VAR qtd_pedidos = 
+    CALCULATE(
+        COUNT(pedido[statusPedido]),
+        DATESBETWEEN(pedido[dataEntrega].[Date], dt"2022-01-01",TODAY()),
+        pedido[statusPedido] = "Entregue")
+
+RETURN qtd_pedidos
+
+//
+SLA Fechado Qtd D-30 = 
+
+VAR qtd_pedidos = 
+    CALCULATE(
+        COUNT(pedido[statusPedido]),
+        DATESINPERIOD(pedido[dataEntrega].[Date], TODAY(),-30,DAY),
+        pedido[statusPedido] = "Entregue")
+
+RETURN qtd_pedidos
+
+//
+SLA Fechado Qtd Dentro do Prazo = 
+
+VAR qtd_pedidos = 
+    CALCULATE(
+        COUNT(pedido[dataEntrega]),
+        DATESBETWEEN(pedido[dataEntrega].[Date], dt"2022-01-01",TODAY()),
+        pedido[AtrasosTeste] = "Dentro do Prazo",
+        pedido[statusPedido] = "Entregue")   
+RETURN qtd_pedidos
+
+//
+SLA Fechado Qtd Dentro do Prazo D-30 = 
+
+VAR data_entrega = 
+    DATESINPERIOD(pedido[dataEntrega].[Date], TODAY(),-30,DAY)
+
+VAR qtd_pedidos = 
+    CALCULATE(
+        COUNT(pedido[Regra atrasos]),
+        data_entrega,
+        pedido[AtrasosTeste] = "Dentro do Prazo",
+        pedido[statusPedido] = "Entregue")
+        
+RETURN qtd_pedidos
+
+//
+SLA Fechado Qtd Dentro do Prazo Mês Anterior D-30 = 
+
+CALCULATE(
+    [SLA Fechado Qtd Dentro do Prazo D-30],
+    PARALLELPERIOD(
+        'Calendar'[Date],
+        -1,
+        MONTH)
+)
+
+//
+SLA Fechado Qtd Mês Anterior D-30 = 
+
+CALCULATE(
+    [SLA Fechado Qtd D-30],
+    PARALLELPERIOD(
+        'Calendar'[Date],
+        -1,
+        MONTH)
+)
+
+//
+SLA Total = COUNT(pedido[Regra atrasos])
+
+//
+Total meta março 23 = 
+SUMX(DISTINCT(pedido[loja]), CALCULATE(MAX(pedido[Meta março 23])))
+
+//
+Total vendas geral = 
+CALCULATE(
+    SUM(pedido[Total venda ajustado])
+)
+
+//
+TotalMêsAnteriorSLA = 
+CALCULATE(
+    COUNT(pedido[Regra atrasos]),
+    FILTER(
+        pedido,
+        AND(
+            pedido[dataEntrega]
+            >= DATE (YEAR(TODAY()),MONTH(TODAY())-1,1),
+            pedido[dataEntrega]
+            <= DATE(YEAR(TODAY()),MONTH(TODAY())-1,DAY(TODAY())))))
+
+//
+TotalMêsAtualSLA = 
+CALCULATE(
+    COUNT(pedido[Regra atrasos]),
+    FILTER(
+        pedido,
+        AND(
+            pedido[dataEntrega]
+            >= DATE (YEAR(TODAY()),MONTH(TODAY()),1),
+            pedido[dataEntrega]
+            <= DATE(YEAR(TODAY()),MONTH(TODAY()),DAY(TODAY())))))
+
+
+//
+Valor ruptura = CALCULATE(
+        AVERAGE('item'[valorUnitario]) * AVERAGE('item'[quantidade]), 
+        DATESBETWEEN(pedido[dataPedido], TODAY() - 30, TODAY()),balance, balance[RegraEstoque] = "Ruptura") / 30
+
+//
+Valor ruptura 90 = [Valor ruptura] * 90
+
+//
+Variação % = 
+DIVIDE (
+    Medidas[Vendas_Dia_Anterior] - Medidas[Vendas_Anteontem],
+    Medidas[Vendas_Anteontem]
+)
+
+//
+Variação $ = 'Medidas'[Vendas_Dia_Anterior] - 'Medidas'[Vendas_Anteontem]
+
+//
+Variação mês = [Total vendas geral] - 'Medidas'[Vendas mês anterior]
+
+//
+Variação SLA Fechado Qtd Dentro do Prazo D-30 = 
+CALCULATE(
+    [SLA Fechado Qtd D-30] - [SLA Fechado Qtd Dentro do Prazo Mês Anterior D-30])
+
+//
+VariaçãoPrazo = 'Medidas'[PrazoEntregaGeral] - 'Medidas'[PrazoEntregaAnterior]
+
+//
+Vendas = 
+VAR total_venda =
+    CALCULATE(
+        SUM(pedido[total venda ajustado]),
+        pedido[Ano] = 2023 && pedido[Mês] = "março")
+
+RETURN total_venda
+
+//
+Vendas mês anterior = 
+CALCULATE(
+     [Total vendas geral],
+     PARALLELPERIOD(
+         'Calendar'[Date],-1
+         ,MONTH))
+
+//
+Vendas_Anteontem = 
+CALCULATE (
+    SUM ( pedido[total venda ajustado] ),
+    FILTER(
+        pedido,
+         pedido[dataAprovacao].[Date] = TODAY () - 2
+))
+
+//
+Vendas_Dia_Anterior = 
+CALCULATE (
+    SUM ( pedido[total venda ajustado] ),
+    FILTER(
+        pedido,
+         pedido[dataAprovacao].[Date] = TODAY () - 1
+))
