@@ -1,0 +1,232 @@
+# Códigos Substituições antigas BI logística
+
+***Descrição do código***
+
+<aside>
+💡
+
+</aside>
+
+```r
+let
+    Source = YourDataSource,  // Replace "YourDataSource" with the name of your data source
+    columnName = "statusPedido",  // Replace "statusPedido" with the name of the column you want to compare and change values
+
+    // List of mappings: Original value -> New value
+    mappings = [
+        ["PENDING", "Novo"],
+        ["novo", "Novo"],
+        ["aprovado", "Aprovado"],
+        ["entregue", "Entregue"],
+        ["em viagem", "Em viagem"],
+        ["CONCLUDED", "Entregue"],
+        ["retornou", "Cancelado"],
+        ["bloqueado", "Cancelado"],
+        ["PAID_WAITING_SHIP", "Aprovado"],
+        ["INVOICED", "Faturado"],
+        ["PAID_WAITING_DELIVERY", "Em viagem"],
+        ["CANCELED", "Cancelado"],
+        ["cancelado", "Cancelado"],
+        ["solicitado devolução", "Cancelado Retornando"],
+        ["devolvido", "Cancelado"],
+        ["faturando", "Aprovado"],
+        ["retornando", "Cancelado retornando"],
+        ["Coletando", "Faturado"],
+        ["coletando", "Faturado"],
+        ["devolvendo", "Cancelado Retornando"],
+        ["desmembrado", "Cancelado"],
+        ["Em aberto", "Novo"],
+        ["Em andamento", "Aprovado"],
+        ["Baixado", "Aprovado"],
+        ["Atendido", "Faturado"],
+        ["Liberado", "Faturado"],
+        ["Expedido", "Em viagem"],
+        ["Não aprovado", "Novo"]
+    ],
+
+    // Recursive function to replace values
+    recursiveReplace = (table as table, rowIndex as number) as table =>
+        let
+            currentCellValue = table{rowIndex}[ColumnName],
+            updatedCellValue = List.First(List.Select(mappings, each _{0} = currentCellValue))?[1],
+            updatedTable = Table.ReplaceValue(table, currentCellValue, updatedCellValue, Replacer.ReplaceText, {columnName})
+        in
+            if rowIndex < Table.RowCount(table) then
+                recursiveReplace(updatedTable, rowIndex + 1)
+            else
+                updatedTable,
+
+    // Invoke recursive function
+    finalTable = recursiveReplace(Source, 0),
+    
+    #"Tipo Alterado" = Table.TransformColumnTypes(finalTable, {{"dataPedido", type date}})
+in
+    #"Tipo Alterado"
+```
+
+```cpp
+let
+    Source = YourDataSource,  // Replace "YourDataSource" with the name of your data source
+    columnName = "statusPedido",  // Replace "statusPedido" with the name of the column you want to compare and change values
+
+    // List of mappings: Values to check -> New value
+    mappings = [
+        {{"PENDING", "novo"}, "Novo"},
+        {{"aprovado", "PAID_WAITING_SHIP", "faturando", "Em andamento", "Baixado"}, "Aprovado"},
+        {{"entregue", "CONCLUDED"}, "Entregue"},
+        {{"em viagem", "PAID_WAITING_DELIVERY", "Expedido"}, "Em viagem"},
+        {{"retornou", "bloqueado", "devolvido", "desmembrado", "CANCELED", "cancelado"}, "Cancelado"},
+        {{"solicitado devolução", "devolvendo"}, "Cancelado Retornando"},
+        {{"Coletando", "coletando"}, "Faturado"},
+        {{"Em aberto", "Não aprovado"}, "Novo"},
+        {{"Atendido", "Liberado"}, "Faturado"}
+    ],
+
+    // Recursive function to replace values
+    recursiveReplace = (table as table, rowIndex as number) as table =>
+        let
+            currentCellValue = table{rowIndex}[ColumnName],
+            updatedCellValue = List.First(List.Select(mappings, each List.Contains(_{0}, currentCellValue)))?[1],
+            updatedTable = Table.ReplaceValue(table, currentCellValue, updatedCellValue, Replacer.ReplaceText, {columnName})
+        in
+            if rowIndex < Table.RowCount(table) then
+                recursiveReplace(updatedTable, rowIndex + 1)
+            else
+                updatedTable,
+
+    // Invoke recursive function
+    finalTable = recursiveReplace(Source, 0),
+    
+    #"Tipo Alterado" = Table.TransformColumnTypes(finalTable, {{"dataPedido", type date}})
+in
+    #"Tipo Alterado"
+```
+
+```cpp
+#"Valor Substituído" = Table.ReplaceValue(#"Personalização Adicionada","PENDING","Novo",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído0" = Table.ReplaceValue(#"Colunas Removidas","PENDING","Novo",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído1" = Table.ReplaceValue(#"Valor Substituído","novo","Novo",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído2" = Table.ReplaceValue(#"Valor Substituído1","aprovado","Aprovado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído3" = Table.ReplaceValue(#"Valor Substituído2","entregue","Entregue",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído4" = Table.ReplaceValue(#"Valor Substituído3","em viagem","Em viagem",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído5" = Table.ReplaceValue(#"Valor Substituído4","CONCLUDED","Entregue",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído6" = Table.ReplaceValue(#"Valor Substituído5","retornou","Cancelado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído7" = Table.ReplaceValue(#"Valor Substituído6","bloqueado","Cancelado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído8" = Table.ReplaceValue(#"Valor Substituído7","PAID_WAITING_SHIP","Aprovado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído9" = Table.ReplaceValue(#"Valor Substituído8","INVOICED","Faturado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído10" = Table.ReplaceValue(#"Valor Substituído9","PAID_WAITING_DELIVERY","Em viagem",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído11" = Table.ReplaceValue(#"Valor Substituído10","CANCELED","Cancelado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído12" = Table.ReplaceValue(#"Valor Substituído11","cancelado","Cancelado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído13" = Table.ReplaceValue(#"Valor Substituído12","solicitado devolução","Cancelado Retornando",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído14" = Table.ReplaceValue(#"Valor Substituído13","devolvido","Cancelado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído15" = Table.ReplaceValue(#"Valor Substituído14","faturando","Aprovado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído16" = Table.ReplaceValue(#"Valor Substituído15","retornando","Cancelado retornando",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído17" = Table.ReplaceValue(#"Valor Substituído16","Coletando","Faturado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído18" = Table.ReplaceValue(#"Valor Substituído17","coletando","Faturado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído19" = Table.ReplaceValue(#"Valor Substituído18","devolvendo","Cancelado Retornando",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído20" = Table.ReplaceValue(#"Valor Substituído19","desmembrado","Cancelado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído21" = Table.ReplaceValue(#"Valor Substituído20","Em aberto","Novo",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído22" = Table.ReplaceValue(#"Valor Substituído21","Em andamento","Aprovado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído23" = Table.ReplaceValue(#"Valor Substituído22","Baixado","Aprovado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído24" = Table.ReplaceValue(#"Valor Substituído23","Atendido","Faturado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído25" = Table.ReplaceValue(#"Valor Substituído24","Liberado","Faturado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído26" = Table.ReplaceValue(#"Valor Substituído25","Expedido","Em viagem",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído27" = Table.ReplaceValue(#"Valor Substituído26","Não aprovado","Novo",Replacer.ReplaceText,{"statusPedido"}),
+    #"Tipo Alterado" = Table.TransformColumnTypes(#"Valor Substituído27",{{"dataPedido", type date}}),
+```
+
+| Substituição | Value | Change by  |
+| --- | --- | --- |
+| #"Valor Substituído" | "PENDING" | "Novo" |
+| #"Valor Substituído0" | "PENDING" | "Novo" |
+| #"Valor Substituído1" | "novo" | "Novo"  |
+| #"Valor Substituído2" | "aprovado" | "Aprovado" |
+| #"Valor Substituído3" | "entregue" | "Entregue" |
+| #"Valor Substituído4" | "em viagem" | "Em viagem" |
+| #"Valor Substituído5" | "CONCLUDED" | "Entregue" |
+| #"Valor Substituído6" | "retornou" | "Cancelado" |
+| #"Valor Substituído7" | "bloqueado" | "Cancelado" |
+| #"Valor Substituído8" | "PAID_WAITING_SHIP" | "Aprovado" |
+| #"Valor Substituído9" | "INVOICED" | "Faturado" |
+| #"Valor Substituído10" | "PAID_WAITING_DELIVERY" | "Em viagem" |
+| #"Valor Substituído11" | "CANCELED" | "Cancelado" |
+| #"Valor Substituído12" | "cancelado" | "Cancelado" |
+| #"Valor Substituído13" | "solicitado devolução" | "Cancelado Retornando" |
+| #"Valor Substituído14" | "devolvido" | "Cancelado" |
+| #"Valor Substituído15" | "faturando" | "Aprovado" |
+| #"Valor Substituído16" | "retornando" | "Cancelado retornando" |
+| #"Valor Substituído17" | "Coletando" | "Faturado" |
+| #"Valor Substituído18" | "coletando" | "Faturado" |
+| #"Valor Substituído19" | "devolvendo" | "Cancelado Retornando" |
+| #"Valor Substituído20" | "desmembrado" | "Cancelado" |
+| #"Valor Substituído21" | "Em aberto" | "Novo" |
+| #"Valor Substituído22" | "Em andamento" | "Aprovado" |
+| #"Valor Substituído23" | "Baixado" | "Aprovado" |
+| #"Valor Substituído24" | "Atendido" | "Faturado" |
+
+let
+    Source = YourDataSource,  // Replace "YourDataSource" with the name of your data source
+    columnName = "statusPedido",  // Replace "statusPedido" with the name of the column you want to compare and change values
+
+    // List of mappings: Values to check -> New value
+    mappings = [
+        {{"PENDING", "novo"}, "Novo"},
+        {{"aprovado", "PAID_WAITING_SHIP", "faturando", "Em andamento", "Baixado"}, "Aprovado"},
+        {{"entregue", "CONCLUDED"}, "Entregue"},
+        {{"em viagem", "PAID_WAITING_DELIVERY", "Expedido"}, "Em viagem"},
+        {{"retornou", "bloqueado", "devolvido", "desmembrado", "CANCELED", "cancelado"}, "Cancelado"},
+        {{"solicitado devolução", "devolvendo"}, "Cancelado Retornando"},
+        {{"Coletando", "coletando"}, "Faturado"},
+        {{"Em aberto", "Não aprovado"}, "Novo"},
+        {{"Atendido", "Liberado"}, "Faturado"}
+    ],
+
+    // Recursive function to replace values
+    recursiveReplace = (table as table, rowIndex as number) as table =>
+        let
+            currentCellValue = table{rowIndex}[ColumnName],
+            updatedCellValue = List.First(List.Select(mappings, each List.Contains(_{0}, currentCellValue)))?[1],
+            updatedTable = Table.ReplaceValue(table, currentCellValue, updatedCellValue, Replacer.ReplaceText, {columnName})
+        in
+            if rowIndex < Table.RowCount(table) then
+                recursiveReplace(updatedTable, rowIndex + 1)
+            else
+                updatedTable,
+
+    // Invoke recursive function
+    finalTable = recursiveReplace(Source, 0),
+    
+    #"Tipo Alterado" = Table.TransformColumnTypes(finalTable, {{"dataPedido", type date}})
+in
+    #"Tipo Alterado"
+
+#"Valor Substituído" = Table.ReplaceValue(#"Personalização Adicionada","PENDING","Novo",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído0" = Table.ReplaceValue(#"Colunas Removidas","PENDING","Novo",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído1" = Table.ReplaceValue(#"Valor Substituído","novo","Novo",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído2" = Table.ReplaceValue(#"Valor Substituído1","aprovado","Aprovado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído3" = Table.ReplaceValue(#"Valor Substituído2","entregue","Entregue",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído4" = Table.ReplaceValue(#"Valor Substituído3","em viagem","Em viagem",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído5" = Table.ReplaceValue(#"Valor Substituído4","CONCLUDED","Entregue",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído6" = Table.ReplaceValue(#"Valor Substituído5","retornou","Cancelado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído7" = Table.ReplaceValue(#"Valor Substituído6","bloqueado","Cancelado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído8" = Table.ReplaceValue(#"Valor Substituído7","PAID_WAITING_SHIP","Aprovado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído9" = Table.ReplaceValue(#"Valor Substituído8","INVOICED","Faturado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído10" = Table.ReplaceValue(#"Valor Substituído9","PAID_WAITING_DELIVERY","Em viagem",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído11" = Table.ReplaceValue(#"Valor Substituído10","CANCELED","Cancelado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído12" = Table.ReplaceValue(#"Valor Substituído11","cancelado","Cancelado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído13" = Table.ReplaceValue(#"Valor Substituído12","solicitado devolução","Cancelado Retornando",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído14" = Table.ReplaceValue(#"Valor Substituído13","devolvido","Cancelado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído15" = Table.ReplaceValue(#"Valor Substituído14","faturando","Aprovado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído16" = Table.ReplaceValue(#"Valor Substituído15","retornando","Cancelado retornando",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído17" = Table.ReplaceValue(#"Valor Substituído16","Coletando","Faturado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído18" = Table.ReplaceValue(#"Valor Substituído17","coletando","Faturado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído19" = Table.ReplaceValue(#"Valor Substituído18","devolvendo","Cancelado Retornando",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído20" = Table.ReplaceValue(#"Valor Substituído19","desmembrado","Cancelado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído21" = Table.ReplaceValue(#"Valor Substituído20","Em aberto","Novo",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído22" = Table.ReplaceValue(#"Valor Substituído21","Em andamento","Aprovado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído23" = Table.ReplaceValue(#"Valor Substituído22","Baixado","Aprovado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído24" = Table.ReplaceValue(#"Valor Substituído23","Atendido","Faturado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído25" = Table.ReplaceValue(#"Valor Substituído24","Liberado","Faturado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído26" = Table.ReplaceValue(#"Valor Substituído25","Expedido","Em viagem",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído27" = Table.ReplaceValue(#"Valor Substituído26","Não aprovado","Novo",Replacer.ReplaceText,{"statusPedido"}),
+    #"Tipo Alterado" = Table.TransformColumnTypes(#"Valor Substituído27",{{"dataPedido", type date}}),
