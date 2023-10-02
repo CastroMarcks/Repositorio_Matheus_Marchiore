@@ -1,0 +1,113 @@
+let
+    // Fonte
+    Fonte = Odbc.DataSource("dsn=PostgreSQL30", [HierarchicalNavigation=true]),
+    edigitalDb_Database = Fonte{[Name="edigitalDb", Kind="Database"]}[Data],
+    public_Schema = edigitalDb_Database{[Name="public", Kind="Schema"]}[Data],
+
+    // Tratamento de pedidos
+    #"Importação de pedido" = Table.RemoveColumns(public_Schema{[Name="pedido", Kind="Table"]}[Data],{"conciliacao_frete", "cotacao", "cron", "item", "pedidoAtivo", "diaRecebidoTransportadora", "prazoTransportadora", "previsaoEntregaTransportadora", "retornoApiTransportadora", "tempoEntregaTransportadora","idPedidoErp", "cronId", "canalVenda", "urlRastreio"}),
+    
+    // Transformação de Status
+   transformaStatus = (status) =>
+    let
+        correspondencias = {{"novo", "Novo"}, {"Entregue", "Entregue"}, {"Em aberto", "Novo"}, {"CANCELED", "Cancelado"}, {"CONCLUDED", "Entregue"}, {"cancelado", "Cancelado"}, {"Assistência Liberada", "#N/D"}, {"PAID_WAITING_DELIVERY", "Em viagem"}, {"Assistência Concluída", "#N/D"}, {"Assistência", "#N/D"}, {"aprovado", "Aprovado"}, {"Assistência Expedida", "#N/D"}, {"entregue", "Entregue"}, {"Expedido", "#N/D"}, {"Cancelado", "Cancelado"}, {"em viagem", "Em viagem"}, {"devolvendo", "Cancelado Retornando"}, {"retornando", "Cancelado retornando"}, {"assist. entregue", "#N/D"}, {"PAID_WAITING_SHIP", "Aprovado"}, {"INVOICED", "Faturado"}, {"Atendido", "Faturado"}, {"faturando", "Aprovado"}, {"Baixado", "Aprovado"}, {"coletando", "Faturado"}, {"PENDING", "Novo"}, {"retornou", "Entregue"}, {"Em digitação", "#N/D"}, {"bloqueado", "Cancelado"}, {"agu.retirada", "#N/D"}, {"Interno", "#N/D"}, {"Liberado", "#N/D"}, {"solicitado devolução", "Cancelado Retornando"}, {"Em andamento", "Aprovado"}, {"x", "#N/D"}, {"devolvido", "Cancelado"}, {"desmembrado", "Cancelado"}, {"sincronização erp", "#N/D"}},
+        resultado = List.First(List.Select(correspondencias, each _{0} = status)){1}
+    in
+    resultado,
+
+    // Substituir a coluna statusPedido pelo resultado da função transformaStatus
+    #"Substituir Status" = Table.TransformColumns(#"Importação de pedido", {"statusPedido", each transformaStatus(_), type text}),
+
+    //Key
+    #"Criação de Key" = Table.AddColumn(#"Substituir Status", "pedido_key", each [idPedido]&"_"&[loja]&"_"&[integradora]),
+
+    //Diferença entre previsão e data de entrega
+    #"Gap de entrega" = Table.AddColumn(#"Criação de Key", "Gap de entrega", each Duration.Days( [previsaoEntrega]-[dataEntrega]), Int64.Type),
+
+    //Condicional de Logística para Satatusde entrega
+        #"Lógica para status" = Table.AddColumn(#"Gap de entrega", "Status de entrega",
+    each if [statusPedido] = "Cancelado" or [statusPedido] = "Cancelado Retornando" then "Cancelado"  
+    else if [statusPedido] = "Entregue" and [Gap de entrega] < 0 then "Entregue em atraso"
+    else if [statusPedido] = "Entregue" and [Gap de entrega] >= 0 then "Entregue no prazo"
+    else if [dataprevisaoEntrega] = null then  "Sem previsão"
+    else if [dataEntrega] = null and Date.From([previsaoEntrega]) < Date.From(DateTime.LocalNow()) then "Pendente em atraso"
+    else if [dataEntrega] = null and Date.From([previsaoEntrega]) >= Date.From(DateTime.LocalNow()) then "Pendente no prazo"
+    else "Sem informação"),
+
+    Modificador=(texto as text) =>
+    let
+        ComAcentos = Text.ToList("àáâãäèéêëìíîïòóôõöùúûüÀÁÂÃÄÈÉÊËÌÍÎÒÓÔÕÖÙÚÛÜçÇñÑ"),
+        SemAcentos = Text.ToList("aaaaaeeeeiiiiooooouuuuAAAAAEEEEIIIOOOOOUUUUcCnN"),
+        ParesAcentos = List.Zip({ComAcentos, SemAcentos}),
+        TextoQuebrado = Text.ToList(texto),
+        Substituicao = List.ReplaceMatchingItems(TextoQuebrado, ParesAcentos),
+        Resultado = Text.Combine(Substituicao)
+    in
+        Resultado,
+
+    // Modificador de cidades
+    #"Modificador de cidades" = Table.AddColumn( 
+                                                Table.TransformColumns( #"Lógica para status",{{"cidade", Text.Upper, type text}}),
+                                                "Consulta1", each Modificador([cidade])
+                                                ),
+    //Município Key
+
+    #"Município Key" = Table.AddColumn(#"Modificador de cidades", "Personalizar", each [Município]&", "&[uf]&", "&"Brasil
+    "),
+    
+    //Mesclagem Tabela regiões
+ #"Consultas Mescladas" = Table.NestedJoin(#"Município Key", {"uf"}, Tabela, {"Sigla"}, "Tabela", JoinKind.LeftOuter),
+    #"Tabela Expandido" = Table.ExpandTableColumn(#"Consultas Mescladas", "Tabela", {"(em branco)", "Sigla", "Região"}, {"Tabela.(em branco)", "Tabela.Sigla", "Tabela.Região"}),
+    #"Colunas Renomeada" = Table.RenameColumns(#"Tabela Expandido",{{"Tabela.(em branco)", "Estado nome"}}),
+
+    
+    //Reordenação das informações
+    #"Colunas Reordenadas" = Table.ReorderColumns( #"Consultas Mescladas", {
+        "pedido_key", "idPedido", "loja", "integradora", "marketplace", "transportadora", "statusPedido", "idPedidoMarketplace","totalCompra", "valorFrete", "freteTransportadora", "dataPedido", "dataAprovacao", "dataFaturamento", "dataExpedicao","previsaoEntrega", "dataEntrega", "cep", "uf", "cidade", "bairro", "endereco", "numeroResidencia", "complemento","cpf", "nome", "email", "responsavelRecebimento", "celular", "quantidadeParcelas", "meioPagamento", "numeroNF", "chaveNF",
+        "marketPlaceNumber", "transportadoraCNPJ"
+    }),
+
+    //Tipagem de cada elemento da tabela
+    #"Tipagem de pedido" = Table.TransformColumnTypes(
+    #"Colunas Reordenadas",                                
+    {
+        {"pedido_key", type text},
+        {"idPedido", type text},
+        {"loja", type text},
+        {"integradora", type text},
+        {"marketplace", type text},
+        {"transportadora", type text},
+        {"statusPedido", type text},
+        {"idPedidoMarketplace", type text},
+        {"totalCompra", Currency.Type},
+        {"valorFrete", Currency.Type},
+        {"freteTransportadora", Currency.Type},
+        {"dataPedido", type date},
+        {"dataAprovacao", type date},
+        {"dataFaturamento", type date},
+        {"dataExpedicao", type date},
+        {"previsaoEntrega", type date},
+        {"dataEntrega", type date},
+        {"cep", type text},
+        {"uf", type text},
+        {"cidade", type text},
+        {"bairro", type text},
+        {"endereco", type text},
+        {"numeroResidencia", type text},
+        {"complemento", type text},
+        {"cpf", type text},
+        {"nome", type text},
+        {"email", type text},
+        {"responsavelRecebimento", type text},
+        {"celular", type text},
+        {"quantidadeParcelas", type text},
+        {"meioPagamento", type text},
+        {"numeroNF", type text},
+        {"chaveNF", type text},
+        {"marketPlaceNumber", type text},
+        {"transportadoraCNPJ", type text}
+    }
+    ),
+    #"Linhas Filtradas" = Table.SelectRows(#"Tipagem de pedido", each true)
+in
+    #"Linhas Filtradas"
