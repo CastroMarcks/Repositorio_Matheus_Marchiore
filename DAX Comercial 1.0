@@ -1,0 +1,85 @@
+Média no Mês = DIVIDE([Venda no mes],[número de dias])
+
+Medida 2 = DIVIDE([Venda no mes],Metas[Meta_total])
+
+número de dias = DATEDIFF(EOMONTH(TODAY(), -1), TODAY(),DAY)
+
+previsão de vendas para o mês = [Venda no mes] + CALCULATE(SUM('Calendário'[Previsão de venda]),
+                                                                FILTER('Calendário','Calendário'[Date]>= TODAY() && 'Calendário'[Date]<= EOMONTH(TODAY(),0)))
+
+Quant = -(DIVIDE(1,[Dias do quarto])*([Dias do quarto]-[Dias restantes do quarter])-[Percentual atingido da meta do quarto])
+
+Venda no mes = CALCULATE(SUM(pedido[A1_Total venda ajustado]), MONTH(pedido[dataPedido])=MONTH(TODAY()), YEAR(pedido[dataPedido])=YEAR(TODAY()))
+
+Vendas dia anterior = 
+CALCULATE(SUM(pedido[A1_Total venda ajustado]), pedido[dataPedido] = (TODAY()-1))
+
+Z0_Média_de_Vendas_no_Mês = DIVIDE([Venda no mes],(DAY(TODAY())-1))
+
+Z1_Tendência_Linear = CALCULATE([Z0_Média_de_Vendas_no_Mês]*DAY(EOMONTH(TODAY(),0)))
+
+A1_Acumulado_no_mês = CALCULATE(SUM(pedido[A1_Total venda ajustado]), MONTH(pedido[dataPedido])=MONTH(TODAY()), YEAR(pedido[dataPedido])=YEAR(TODAY()), DAY(pedido[dataPedido])<= DAY(TODAY()))
+
+A2_Acumlado_mês_anterior = CALCULATE(SUM(pedido[A1_Total venda ajustado]), MONTH(pedido[dataPedido])=(MONTH(TODAY())-1), YEAR(pedido[dataPedido])=YEAR(TODAY()), DAY(pedido[dataPedido]) <= DAY(today()))
+
+A3_Crescimento(M/M-1) = -1+([A1_Acumulado_no_mês]/[A2_Acumlado_mês_anterior])
+
+A4_Acumulado_D-1 = CALCULATE(SUM(pedido[A1_Total venda ajustado]),
+ MONTH(pedido[dataPedido])=MONTH(TODAY()), 
+ YEAR(pedido[dataPedido])=YEAR(TODAY()),
+ DAY(pedido[dataPedido])= (DAY(TODAY())-1))
+
+A5_ticket_Médio = CALCULATE(DIVIDE(SUM(pedido[A1_Total venda ajustado]),COUNTROWS(pedido)))
+
+A6_Percentual_de_frete = CALCULATE(DIVIDE(SUM(pedido[valorFrete]),(SUM(pedido[totalCompra])-SUM(pedido[valorFrete]))))
+
+A7_Taxa_de_aprovação = DIVIDE(CALCULATE(COUNTROWS(pedido), pedido[dataAprovacao]<>BLANK()),COUNTROWS(pedido))
+
+A8_Acumulado_no_período = SUM(pedido[totalCompra])
+
+A9_Metas = CALCULATE(SUM(Metas[Metas]))
+
+B1_Tendência_Linear = 'Cálculo de tendência'[Z1_Tendência_Linear]
+
+B2_Tendência_ponderada = [previsão de vendas para o mês]
+
+B3_Atigimento = CALCULATE(-1+DIVIDE([A1_Acumulado_no_mês],[A9_Metas]))
+
+B4_Taxa_de_Cancelamento = CALCULATE(DIVIDE(
+                                            CALCULATE(
+                                                COUNTROWS(pedido),
+                                                pedido[statusPedido] = "Cancelado" || pedido[statusPedido] = "Cancelado Retornando"),
+                                            COUNTROWS(pedido)),
+                                            pedido[dataAprovacao] <> BLANK())
+
+B5_Itens_em_ruptura = CALCULATE(DISTINCTCOUNT(balance[sku]), balance[estoqueReal] = 0) 
+
+B6_Máximo = [A9_Metas] + 2000000
+
+C1_acumulado_Vendas = SUM(pedido[A1_Total venda ajustado])
+
+C3_Cor_Pareto = IF([C4_Pareto]<= 0.8, "#ff4e00", "#034b8a")
+
+C4_Pareto = 
+var _totalvendas =CALCULATE( [A8_Acumulado_no_período],ALLSELECTED(pedido))
+var _totalAtual = [A8_Acumulado_no_período]
+var tbResumo = 
+SUMMARIZE(ALLSELECTED(pedido),
+            'item'[sku_key],
+            "Total",[A8_Acumulado_no_período]
+)
+var totalAcumulado = 
+SUMX(FILTER(tbResumo,[Total] >= _totalAtual),[Total])
+return totalAcumulado/_totalvendas
+
+C5_Diferença_Meta_e_Acumulado = 1-([A9_Metas]/[B1_Tendência_Linear])
+
+C7_Share = 1
+
+C8_Quantidade de venda D-30 = 
+CALCULATE(
+    SUM('item'[quantidade]),
+    TREATAS(
+        VALUES('pedido'[idPedido]),
+        'item'[pedidoIdPedido]
+    ))
