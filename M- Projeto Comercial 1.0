@@ -1,0 +1,96 @@
+// M para tabela de pedido:
+
+let
+    Fonte = Odbc.DataSource("dsn=PostgreSQL30", [HierarchicalNavigation=true]),
+    edigitalDb_Database = Fonte{[Name="edigitalDb",Kind="Database"]}[Data],
+    public_Schema = edigitalDb_Database{[Name="public",Kind="Schema"]}[Data],
+    pedido_Table = public_Schema{[Name="pedido",Kind="Table"]}[Data],
+    #"Personalização Adicionada" = Table.AddColumn(pedido_Table, "pedido_key", each [idPedido]&"_"&[loja]&"_"&[integradora]),
+    #"Valor Substituído" = Table.ReplaceValue(#"Personalização Adicionada","PENDING","Novo",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído0" = Table.ReplaceValue(#"Colunas Removidas","PENDING","Novo",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído1" = Table.ReplaceValue(#"Valor Substituído","novo","Novo",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído2" = Table.ReplaceValue(#"Valor Substituído1","aprovado","Aprovado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído3" = Table.ReplaceValue(#"Valor Substituído2","entregue","Entregue",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído4" = Table.ReplaceValue(#"Valor Substituído3","em viagem","Em viagem",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído5" = Table.ReplaceValue(#"Valor Substituído4","CONCLUDED","Entregue",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído6" = Table.ReplaceValue(#"Valor Substituído5","retornou","Cancelado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído7" = Table.ReplaceValue(#"Valor Substituído6","bloqueado","Cancelado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído8" = Table.ReplaceValue(#"Valor Substituído7","PAID_WAITING_SHIP","Aprovado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído9" = Table.ReplaceValue(#"Valor Substituído8","INVOICED","Faturado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído10" = Table.ReplaceValue(#"Valor Substituído9","PAID_WAITING_DELIVERY","Em viagem",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído11" = Table.ReplaceValue(#"Valor Substituído10","CANCELED","Cancelado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído12" = Table.ReplaceValue(#"Valor Substituído11","cancelado","Cancelado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído13" = Table.ReplaceValue(#"Valor Substituído12","solicitado devolução","Cancelado Retornando",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído14" = Table.ReplaceValue(#"Valor Substituído13","devolvido","Cancelado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído15" = Table.ReplaceValue(#"Valor Substituído14","faturando","Aprovado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído16" = Table.ReplaceValue(#"Valor Substituído15","retornando","Cancelado retornando",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído17" = Table.ReplaceValue(#"Valor Substituído16","Coletando","Faturado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído18" = Table.ReplaceValue(#"Valor Substituído17","coletando","Faturado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído19" = Table.ReplaceValue(#"Valor Substituído18","devolvendo","Cancelado Retornando",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído20" = Table.ReplaceValue(#"Valor Substituído19","desmembrado","Cancelado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído21" = Table.ReplaceValue(#"Valor Substituído20","Em aberto","Novo",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído22" = Table.ReplaceValue(#"Valor Substituído21","Em andamento","Aprovado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído23" = Table.ReplaceValue(#"Valor Substituído22","Baixado","Aprovado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído24" = Table.ReplaceValue(#"Valor Substituído23","Atendido","Faturado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído25" = Table.ReplaceValue(#"Valor Substituído24","Liberado","Faturado",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído26" = Table.ReplaceValue(#"Valor Substituído25","Expedido","Em viagem",Replacer.ReplaceText,{"statusPedido"}),
+#"Valor Substituído27" = Table.ReplaceValue(#"Valor Substituído26","Não aprovado","Novo",Replacer.ReplaceText,{"statusPedido"}),
+    #"Tipo Alterado" = Table.TransformColumnTypes(#"Valor Substituído27",{{"dataPedido", type date}}),
+    #"Coluna Condicional Adicionada" = Table.AddColumn(#"Tipo Alterado", "Data ajustada", each if [integradora] = "bling" then [dataPedido] else [dataAprovacao]),
+    #"Tipo Alterado1" = Table.TransformColumnTypes(#"Coluna Condicional Adicionada",{{"Data ajustada", type date}}),
+    #"Duplicatas Removidas" = Table.Distinct(#"Tipo Alterado1", {"pedido_key"}),
+    #"Tipo Alterado2" = Table.TransformColumnTypes(#"Duplicatas Removidas",{{"lojaId", Int64.Type}}),
+    #"Personalização Adicionada1" = Table.AddColumn(#"Tipo Alterado2", "Loja_market", each [loja]&"_"&[marketplace]),
+    #"Linhas Filtradas" = Table.SelectRows(#"Personalização Adicionada1", each [Loja_market] <> "By Mobille_Api"),
+    #"Linhas Filtradas1" = Table.SelectRows(#"Linhas Filtradas", each [Loja_market] <> "Top Móveis_allFront 1P"),
+    #"Tipo Alterado3" = Table.TransformColumnTypes(#"Linhas Filtradas1",{{"Loja_market", type text}}),
+    #"Linhas Filtradas2" = Table.SelectRows(#"Tipo Alterado3", each ([Loja_market] <> "Casa 812_B2W V2" and [Loja_market] <> "Casa 812_Banco Inter" and [Loja_market] <> "Casa 812_MadeiraMadeira" and [Loja_market] <> "Casa 812_Magazine Luiza" and [Loja_market] <> "Casa 812_ViaVarejo" and [Loja_market] <> "Casa 812_Zoom Marketplace"))
+in
+    #"Linhas Filtradas2"
+
+//M para tabela de regiões
+
+let
+    Fonte = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("bZJBboMwEEWvglgnhyCEoEYlWHZ2URaTYCWWwEYGNr1N1HV2vYEv1hloEzBsvPD/83nzzekURlcrw1UYxXgcjG1leF7hbQk3Aw0Jn4NQyOZfq6B2D5LYdKaCL6OHoWyibOCuAG82kZ8VS7B9Vpz40lY1rVWtCXaykBZK1Lc7ckrdWrPOX8akqd2zdwrQrUFLIvAQ3TsrNco9CCzNlxIysKDv7ptmsxljBhidWtM0vX5cTnh5ggJBOsLNxKJVYUdBiispIspSj5X9NcKiSYd4De55oRrZxkckUQ9TvI8rh2tpNVSX7krgbNYwU9C5J0kfvsQV7iGDPWipLE3zvYdJjhS/ii5ceOBE22Ep6e0biuFiBMmNLtyP7n8Qnk925gZLqnqBTwR6aAhiaMFimxQWjxIFvmTAoCsJXDAPXEh7UzXBilkjR3PFZKXpYY4jlvMv", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [Estado = _t, Sigla = _t, Região = _t])
+in
+    Fonte
+
+// M para tabela de  balance: 
+
+let
+    Fonte = Odbc.DataSource("dsn=PostgreSQL30", [HierarchicalNavigation=true]),
+    edigitalDb_Database = Fonte{[Name="edigitalDb",Kind="Database"]}[Data],
+    public_Schema = edigitalDb_Database{[Name="public",Kind="Schema"]}[Data],
+    balance_Table = public_Schema{[Name="balance",Kind="Table"]}[Data],
+    #"Personalização Adicionada" = Table.AddColumn(balance_Table, "sku_key", each [sku]&"_"&[loja]&"_"&[integradora]),
+    #"Colunas Reordenadas" = Table.ReorderColumns(#"Personalização Adicionada",{"sku_key", "id", "titulo", "codigoPai", "marca", "ncm", "altura", "largura", "profundidade", "medida", "ean", "status", "categoria", "subcategoria", "sku", "loja", "integradora", "peso", "estoqueReal"}),
+    #"Duplicatas Removidas" = Table.Distinct(#"Colunas Reordenadas", {"sku_key"})
+in
+    #"Duplicatas Removidas"
+
+// M para tabela de itens 
+
+let
+    Fonte = Odbc.DataSource("dsn=PostgreSQL30", [HierarchicalNavigation=true]),
+    edigitalDb_Database = Fonte{[Name="edigitalDb",Kind="Database"]}[Data],
+    public_Schema = edigitalDb_Database{[Name="public",Kind="Schema"]}[Data],
+    item_Table = public_Schema{[Name="item",Kind="Table"]}[Data],
+    #"Personalização Adicionada" = Table.AddColumn(item_Table, "pedido_key", each [pedidoIdPedido]&"_"&[pedidoLoja]&"_"&[pedidoIntegradora]),
+    #"Colunas Reordenadas" = Table.ReorderColumns(#"Personalização Adicionada",{"pedido_key", "id", "sku", "titulo", "valorUnitario", "quantidade", "pedidoIdPedido", "pedidoLoja", "pedidoIntegradora", "pedido"}),
+    #"Personalização Adicionada1" = Table.AddColumn(#"Colunas Reordenadas", "sku_key", each [sku]&"_"&[pedidoLoja]&"_"&[pedidoIntegradora]),
+    #"Duplicatas Removidas" = Table.Distinct(#"Personalização Adicionada1", {"pedido_key"})
+in
+    #"Duplicatas Removidas"
+
+//M para Tabela de metas
+let
+    Fonte = GoogleSheets.Contents("https://docs.google.com/spreadsheets/d/1d2B61361lsI2-sGTT18SlZF8cCjPRPiKS4jMlNWcoBc/edit?usp=sharing"),
+    Metas_Table = Fonte{[name="Metas",ItemKind="Table"]}[Data],
+    #"Linhas Superiores Removidas" = Table.Skip(Metas_Table,3),
+    #"Cabeçalhos Promovidos" = Table.PromoteHeaders(#"Linhas Superiores Removidas", [PromoteAllScalars=true]),
+    #"Tipo Alterado" = Table.TransformColumnTypes(#"Cabeçalhos Promovidos",{{"loja", type text}, {"Metas", Int64.Type}}),
+    #"Linhas Filtradas" = Table.SelectRows(#"Tipo Alterado", each ([#"Responsavel "] <> "")),
+    #"Duplicatas Removidas" = Table.Distinct(#"Linhas Filtradas", {"loja"})
+in
+    #"Duplicatas Removidas"
+
