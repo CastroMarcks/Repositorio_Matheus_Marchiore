@@ -1,0 +1,297 @@
+```r
+# Usamos o (#) quando vamos fzaer comentários no código R
+
+# Atribuição de variáveis
+a <- "teste" 
+b = "teste" #evitar usar esse tipo de atribuição
+c <- 7
+d <- C(a,b) # função C serve para concatenação
+?C # Serve para mostrar o descritivo da função 
+
+a <- c(10,5,15,20)
+?summary
+summary(a)
+install.packages("stringr") # instalando subplementos como se fosse bibliotecas em Python 
+library(stringr)
+Nome <- "Joao"
+Sobrenome <- "Silva"
+NomeCompleto <- str_c(Nome, Sobrenome)
+
+#Conteúdos: operadores de soma (+), subtração (-), divisão (/),
+# multiplicação (*) e potência (**). 
+#Perguntas: é igual? (==) é diferente? (!=) é maior? (>) é menor? (<).
+#Lógica E (&), OU (|) e negação (!).
+
+# aqui temos uma observação muito massa que é a negação
+# se colocamos o (!) na frebte de uma variável, estaremos negando ela.
+
+# As tipagens não são prédefinidas como no Python e vão variar de acordo com a atribuição 
+Salario <- 3450.89
+Horas <- 220
+SH <- Salario/Horas
+SHi <- as.integer(Salario/Horas)
+SHr <- round(Salario/Horas)
+Numeros2 <- c(Salario,Horas)
+
+# Armazenamento de caracter sem pre deve ser feito com o texto em aspas duplas 
+
+Nome_1 <- "teste1"
+Nome_2 <- "teste2"
+Nome_3 <- C(Nome_1,Nome_2)
+
+# Para acessar cala elemento tratamos o Nome_3 como vetor e precisomaos indiar a posição
+# Apesar de não podermos fazer operações matemáticas, podemos fazer comparativos lógicos 
+Nome_3
+Nome_3[1]
+Nome_3[2]
+Nome_3[2] == Nome_3[1] # igualdade
+Nome_3[2] != Nome_3[1] # diferença
+
+# podemos mudar a tipagem da variável usando (as.função) 
+# A função as.factor transforma a variável em tipo fator e nos volta até mesmo os niveis de fator.
+# podemos usar em conjunto com summary() que ele vai categorizar
+
+CargaHoraria <- as.factor(c(220,220,150,100,100))
+summary(CargaHoraria)
+
+#Armazenamento lógico
+
+L2 <- Salario < Horas
+Logico <- TRUE
+
+#famoso boleano em true e false, mas com o nome de logical para essa tipagem
+# podemos fazer isso também passando TRUE ou FALSE para a variável
+
+# Estrtutura básicas de dados em R, sempre que variáveis tiver apenas uma tipagem interna
+# ela vai ser considerada um vetor, que possuem as mesma propriedade de um vetor comum 
+# Length que é o tamnao, podemos usar também a função is.vactor() para a conferência. 
+
+# uma lista em R pode ser entendia como um vetor que guarda diferente tipos de dados 
+# podemo verificar usando o is.list()
+# para definir uma lista temos que usar a função list()
+
+b <- list(C(10,3,4),"2",8)
+is.list(b)
+b[[1]] # nos retorna 10,3,4
+b[1][1] # nos retorna 10
+
+# A matriz é um vetor com mais de 1 dimensão.
+# Não pode ter tipo de dados diferentes.  
+
+m <- matrix(1:9, nrow = 3)
+m[1,1] <- "a" # m[lina,coluna] para acessar ume elemento
+
+#data Frames 
+# Objetivo : trabalhar com bancos de dados 
+
+# Denifir area de trabalho (definir o diretório fonte do banco de dados) 
+setwd("c:/banco")
+
+# Importando base de dados
+df <- read.csv("DataFrame.csv") # leitura e salva em uma variável
+Col2 <- df$DIA_SEM
+
+# Analisando um data frame 
+view(df)
+
+# Tipos de dados
+str(df) # função usada para analisar mais a fundo as propriedades de um df/vet/list
+summary(df)
+#Selecionando vaiáveis 
+df
+df[1]
+df$ # quando usamos o $ aparce uma lista suspensa com os nomes das colunas
+
+Col1 <- df[1] # rebe os valores e define como data frame 
+Col2 <- df$DIA_SEM # recebe os valores e a tipagem do vetor. 
+
+# verificando as classes
+class(Col1) # Data Frame 
+class(Col2) # Factor
+class(df$Dia_SEM) # Factor
+
+# excluir uma coluna
+
+df$ONIBUS <- NULL
+
+# Alterando tipo de variável dentro do df 
+
+df$UPS
+summary(df$UPS) # aprenste as estatísticas da coluna summaryzada
+df$UPS <- as.factor(df$UPS)
+summary(df$UPS)
+
+# Criando uma variável nova dentro do df
+
+df$NOVA <-"a"
+class(df$NOVA)
+df$NOVA <- C(2,5,10) # Vai voltar os valores repetidos 
+df$NOVA <- C(2,5,10,NA,NA,NA,NA,NA,NA,NA) # o valor NA é branco
+df$NOVA <- NULL  # tudo nulo
+df$NOVA <- NA # Tundo em branco
+df$NOVA[1:3] <-  C(2,5,10) # só nas 3 primeira linhas
+
+# filtros 
+#Objetivo : acessar, extrair e modificar dados em variáveis
+
+# tarbalho com data frames 
+setwd("c:/banco")
+df[1] # retorna  a primeira coluna 
+df[1,] # retorna a primeira lonha 
+#df[linha,coluna]
+
+df[1:6] # retorna da coluan 1 até a coluna 6
+df[-4] # todas menos a coluna $ 
+df[1,1]
+df[1,1:6] # a primeira linha das colunas 1 a 6 
+
+df[1:3,1:6] # linahs 1,2,3 e colunas 1 a 6
+df[-1,-4] # todas menos a linha um e coluna 4
+
+# modificando o df
+df <- df[C(-3,-4,-5,-6)
+
+# filtrando as variáveis
+df[1,1] 
+df$DIA_SEM[1] # só a posição 1 da variável 
+df$AUTO[2:4]
+
+df$UPS ==1 # retona TRUE para posições com dado verdadeiro
+df[dfUPS ==1,] # retona somente as linhas que é verdadeiro
+
+# modificando o df
+df ,- df[df$UPS ==1,] 
+
+# modificando o df 
+
+df <- df[df$UPS ==1,] 
+
+#df x df1
+
+df1<- read.csv("DataFrame.csv") 
+View(df1)
+View(df)
+
+```
+
+```r
+# OBJETIVO: condicionar ações 
+#COOMO? : condicional IF, loop FOR e loop WHILE
+
+#se algo é verdade faça 
+if(5==5) 6+6
+
+#se não
+if (5==5) 6+6 else "condição não atendida"
+
+# melhores práticas 
+if (5==5){
+6+6
+} else { "condição não atendida"
+	}
+#exemplo
+idades <- c(25,30)
+nomes <- c("joao","Caina")
+df <- data.frame(nomes,idades)
+
+if (df&idade[df$nomes =="Joao"] > df$idade[dfnomes == "Caina"]){
+	"mais velho : Joao"
+}else {
+"mais velho: Caina"
+}
+
+idades <- c(25,30,24,29,31,12)
+nomes <- c("joao","Caina","maria","leoa, "lia" , "Enzo")
+df <- data.frame(nomes,idades)
+
+# para cada pisção faça
+for (i n idades){
+	print(i)
+}
+
+for 
+#exemple
+ v<-0 
+for (i in df$idades){ 
+		if ( i>V) {v<-i}
+}
+df&nomes[df&idades ==V] 
+
+# enquanto pe verdade façã isso
+x<-0 
+for(i in df$idades){
+		if(i>v) {v <-i}
+}
+df$nomes[df$idades == v] 
+
+# enquanto é verdade faça isso 
+x<- 0 
+while (x<20){
+	print(x)
+x <- x+1
+}
+
+while
+# exemplo -não permitir que as somas das idades seja maior que 100
+# Y <- 0 
+x <- 0
+cont <- 0
+idades100 <- 0 
+
+while (x< 100) {
+
+	cont <- cont +1
+	idades100[cont] <- idades [cont]
+	x <- x+idades[cont]
+#y <- x+idades[cont+1]
+}
+
+#+idades[cont+1]
+idades
+idades100
+sum(idades10)
+```
+
+```r
+#Ojetivo: repetir instruções
+#como?
+#criando funções
+
+#qual a soma dos valores de a?
+a<- C(423,464,69,519,123,258)
+
+# soluçãp
+x <- 0
+for ( i in b ){
+X <- X+1
+}
+PRINT(X)
+}
+
+# Precisamos realizar 50 somas no código?
+
+soma <- function(y){
+		x <- 0
+for ( in in y) {
+		x <-x +i
+	}
+	print(x)
+}
+
+soam(a)
+soma(b)
+
+# as variaveis dentro de uam função só existem dentro da função quando a função apra de rodar
+# aelas param de existir
+# a definição e passagem de parâmettros funciona como  em Python 
+
+soma2 <- funtion (y,z){
+	x<- 0
+	c<- 0
+	for ( i in y) {
+		c <- c+1
+		x <- z[c] +i
+		print(x)
+}
+
+```
