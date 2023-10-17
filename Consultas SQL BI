@@ -1,0 +1,164 @@
+```sql
+SELECT
+    t3."statusPedido",
+    t3."dataPedido",
+    t3."idPedido",
+    t2.peso,
+    t3.loja,
+    t1.sku,
+    t2.altura,
+    t2.largura,
+    t2.profundidade,
+    (CASE
+        WHEN t2.medida = 'Centímetro' OR t2.medida = 'Centímetros' THEN t2.altura * t2.largura * t2.profundidade * POWER(10, -6)
+        WHEN t2.medida = 'Milímetro' THEN t2.altura * t2.largura * t2.profundidade * POWER(10, -9)
+        ELSE t2.altura * t2.largura * t2.profundidade
+    END) AS cubagem,
+    t2.medida,
+    t3.cep,
+    t3.cidade,
+    t3.uf,
+    t3."totalCompra",
+    t3."previsaoEntregaTransportadora",
+    t3."dataEntrega",
+    (CASE
+        WHEN t3."previsaoEntrega" IS NOT NULL THEN t3."previsaoEntrega" - t3."dataPedido"
+        ELSE t3."dataEntrega" - t3."dataPedido"
+    END) AS "Tempo de entrega",
+    t3."valorFrete",
+    t2.categoria,
+    t1.titulo
+FROM
+    item AS T1
+LEFT JOIN
+    balance AS T2 ON T1.sku = T2.sku AND T1."pedidoLoja" = T2.loja
+LEFT JOIN
+    pedido AS T3 ON T1."pedidoIdPedido" = T3."idPedido" AND T1."pedidoLoja" = T3.loja AND T1."pedidoIntegradora" = T3.integradora
+WHERE
+    t3."dataPedido" > '2023-04-01 00:00:00.000'
+    AND t3."dataPedido" < '2023-07-01 00:00:00.000'
+    AND t3."statusPedido" IN (
+        'aprovado',
+        'entregue',
+        'em viagem',
+        'CONCLUDED',
+        'PAID_WAITING_SHIP',
+        'INVOICED',
+        'PAID_WAITING_DELIVERY',
+        'faturando',
+        'Coletando',
+        'coletando',
+        'Em andamento',
+        'Baixado',
+        'Atendido'
+    );
+
+//query 2
+
+select "pedidoLoja", 
+		 sum ("valorCTE") as "valorCTE",
+		 sum ( "valorCobradoCliente") as "valor cobrado do cliente",
+		 sum ( "valorCotadoTabela") as "cotado na tabelaz",
+		 sum ( "diferencaValorCliente") as "Diferença valor cliente"
+from conciliacao_frete cf 
+where "pedidoLoja" = 'LM Store'
+		and "dataEmissao" > '2023-08-15 00:00:01' and "dataEmissao" < '2023-08-22 23:59:59'
+group by "pedidoLoja" 
+
+// query 2 
+	
+select distinct "pedidoLoja", "pedidoIdPedido",
+		("valorCTE") as "valorCTE",
+		("valorCobradoCliente") as "valor cobrado do cliente",
+		("valorCotadoTabela") as "cotado na tabelaz",
+		("diferencaValorCliente") as "Diferença valor cliente"
+from conciliacao_frete cf 
+where "pedidoLoja" = 'LM Store'
+		and "dataEmissao" > '2023-08-15 00:00:01' and "dataEmissao" < '2023-08-22 23:59:59'
+		
+// Query 3
+
+SELECT "pedidoLoja", SUM(DISTINCT "diferencaValorCliente") AS somaDistintaDiferenca
+FROM conciliacao_frete
+WHERE "pedidoLoja" = 'LM Store'
+    AND "dataEmissao" > '2023-08-14 23:59:59'
+    AND "dataEmissao" < '2023-08-22 23:59:59'
+GROUP BY "pedidoLoja";
+
+//query 3
+
+SELECT "pedidoLoja", SUM("diferencaValorCliente") AS somaDiferenca
+FROM (
+    SELECT DISTINCT "pedidoLoja", "diferencaValorCliente"
+    FROM conciliacao_frete
+    WHERE "pedidoLoja" = 'LM Store'
+        AND "dataEmissao" > '2023-08-15 00:00:01'
+        AND "dataEmissao" < '2023-08-22 23:59:59'
+) AS distinct_pedidos
+GROUP BY "pedidoLoja";
+
+SELECT "pedidoLoja", SUM(DISTINCT "diferencaValorCliente") AS somaDistintaDiferenca
+FROM conciliacao_frete
+WHERE "pedidoLoja" = 'LM Store'
+    AND "dataEmissao" > '2023-08-14 23:59:59'
+    AND "dataEmissao" < '2023-08-22 23:59:59'
+    and "tipoCte"  = 'contrato'
+GROUP BY "pedidoLoja";
+
+SELECT "pedidoLoja", SUM("diferencaValorCliente") AS somaDiferenca
+FROM (
+    SELECT DISTINCT "pedidoLoja", "diferencaValorCliente"
+    FROM conciliacao_frete
+    WHERE "pedidoLoja" = 'LM Store'
+        AND "dataEmissao" > '2023-08-15 00:00:01'
+        AND "dataEmissao" < '2023-08-22 23:59:59'
+        and "tipoCte"  = 'contrato'
+) AS distinct_pedidos
+GROUP BY "pedidoLoja";
+
+SELECT "pedidoLoja",  AS somaDiferenca
+FROM (
+    SELECT DISTINCT "pedidoLoja", "diferencaValorCliente",
+    FROM conciliacao_frete
+    WHERE "pedidoLoja" = 'LM Store'
+        AND "dataEmissao" > '2023-08-15 00:00:01'
+        AND "dataEmissao" < '2023-08-22 23:59:59'
+) AS distinct_pedidos
+```
+
+```sql
+WITH tabela_junta AS (
+    SELECT *
+    FROM pedido AS t1
+    LEFT JOIN item AS t2 ON t1."idPedido" = t2."pedidoIdPedido" 
+				    	and t1."loja" = t2."pedidoLoja"
+				    	and t1."integradora" = t2."pedidoIntegradora"
+    LEFT JOIN balance AS t3 ON t2.sku = t3.sku
+    					and t2."pedidoLoja" = t3.loja 
+    					and t2."pedidoIntegradora" = t3.integradora 
+    WHERE t1."statusPedido" IN (
+        'aprovado',
+        'entregue',
+        'em viagem',
+        'CONCLUDED',
+        'PAID_WAITING_SHIP',
+        'INVOICED',
+        'PAID_WAITING_DELIVERY',
+        'faturando',
+        'Coletando',
+        'coletando',
+        'Em andamento',
+        'Baixado',
+        'Atendido'
+    )
+)
+
+select sum("tabela_junta"."totalCompra")as total
+FROM tabela_junta
+WHERE "tabela_junta"."dataPedido" >= '2023-08-27 00:00:01' 
+  AND "tabela_junta"."dataPedido" <= '2023-08-27 23:59:59'
+  AND "tabela_junta"."pedidoLoja" = 'Lojas Dular'
+  and "tabela_junta"."integra" = 'precode'
+  and "tabela_junta"."categoria" = 'Móveis'
+group by "tabela_junta"."pedidoLoja"
+```
