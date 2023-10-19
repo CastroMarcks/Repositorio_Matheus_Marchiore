@@ -1,0 +1,44 @@
+DateAutoTemplate = 
+--  
+--     Configuration
+--  
+VAR __FirstDayOfWeek = 1
+----------------------------------------
+VAR __WeekDayCalculationType = IF ( __FirstDayOfWeek = 0, 7, __FirstDayOfWeek ) + 10
+VAR __Calendar = 
+    VAR __FirstYear = YEAR ( MINX ( { MIN ( 'Imput'[Carimbo de data/hora] ) }, ''[Value] ) )
+    VAR __LastYear =  YEAR ( MAXX ( { MAX ( 'Imput'[Carimbo de data/hora] ) }, ''[Value] ) )
+    RETURN CALENDAR (
+        DATE ( __FirstYear, 1, 1 ),
+        DATE ( __LastYear, 12, 31 )
+    )
+VAR __Step3 = 
+    GENERATE (
+        __Calendar,
+        VAR __IsStandardLocale = IF ( FORMAT( DATE( 2000, 1, 1 ), "oooo" ) = "oooo", TRUE, FALSE )
+        VAR __MonthFormatString = IF( __IsStandardLocale, "mmm", "ooo" )
+        VAR __DayFormatString = IF( __IsStandardLocale, "ddd", "aaa" )
+        VAR __LastTransactionDate = MAXX ( { MAX ( 'Imput'[Carimbo de data/hora] ) }, ''[Value] )
+        VAR __Date = [Date]
+        VAR __YearNumber = YEAR ( __Date )
+        VAR __QuarterNumber = QUARTER ( __Date )
+        VAR __YearQuarterNumber = CONVERT ( __YearNumber * 4 + __QuarterNumber - 1, INTEGER )
+        VAR __MonthNumber = MONTH ( __Date )
+        VAR __WeekDayNumber = WEEKDAY ( __Date, __WeekDayCalculationType )
+        VAR __WeekDay = FORMAT ( __Date, __DayFormatString )
+        RETURN ROW ( 
+            "Year", __YearNumber,
+            "Year Quarter Number", __YearQuarterNumber,
+            "Year Quarter", FORMAT ( __QuarterNumber, "\Q0" ) & "-" & FORMAT ( __YearNumber, "0000" ),
+            "Quarter", FORMAT( __QuarterNumber, "\Q0" ),
+            "Year Month", FORMAT ( __Date, __MonthFormatString & " yyyy" ),
+            "Year Month Number", __YearNumber * 12 + __MonthNumber - 1,
+            "Month", FORMAT ( __Date, __MonthFormatString ),
+            "Month Number", __MonthNumber,
+            "Day of Week Number", __WeekDayNumber,
+            "Day of Week", __WeekDay,
+            "DateWithTransactions", __Date <= __LastTransactionDate 
+        )
+    )
+RETURN
+    __Step3
