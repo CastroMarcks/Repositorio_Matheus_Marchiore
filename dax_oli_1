@@ -1,0 +1,374 @@
+DEFINE
+    MEASURE 'Medidas'[GMV_Incremental] = CALCULATE(SUM(F_df_pedidos_incrementais[GMV_incremental]))
+    MEASURE 'Medidas'[GPA_Incremental] = CALCULATE(SUM(F_df_pedidos_incrementais[F_GPA_ajusted.gross_profit_adjusted]))
+    MEASURE 'Medidas'[Qtde_estoque_antes] = CALCULATE(SUM('F_qntde_pré_disparo'[quantity]),USERELATIONSHIP('F_qntde_pré_disparo'[dia],'Date'[Date]))
+    MEASURE 'Medidas'[Qtde_estoque_depois] = CALCULATE(SUM('F_qntde_pós_disparo'[quantity_pos_disparo]))
+    MEASURE 'Medidas'[Ganho_de_estoque] = [Qtde_estoque_depois] - [Qtde_estoque_antes]
+    MEASURE 'Medidas'[Qtde_total_de_negociações] = CALCULATE(DISTINCTCOUNT(F_OLI_CRM[negotiation_id]))
+    MEASURE 'Medidas'[Qtde_entregue_de_contatos] = CALCULATE(DISTINCTCOUNT(F_OLI_CRM[negotiation_id]))
+    MEASURE 'Medidas'[Qtde_sellers_contatados] = CALCULATE(DISTINCTCOUNT(F_OLI_CRM[seller_id]))
+    MEASURE 'Medidas'[Qtde_SKU_contatados] = CALCULATE(DISTINCTCOUNT(F_OLI_CRM[SKU]))
+    MEASURE 'Medidas'[Qtde_total_sellers] = DISTINCTCOUNT(D_Seller[id])
+    MEASURE 'Medidas'[%_sellers_contatados] = DIVIDE([Qtde_sellers_contatados],[Qtde_total_sellers])
+    MEASURE 'Medidas'[%_SKU_contatados] = DIVIDE([Qtde_SKU_contatados],[Qtde_total_SKU])
+    MEASURE 'Medidas'[Qtde_total_SKU] = CALCULATE(DISTINCTCOUNT(D_Produto[SKU])) // tem que considerar itens ativo ainda
+    MEASURE 'Medidas'[Qtde_total_de_contatos] = CALCULATE(COUNT(F_OLI_CRM[negotiation_id]))
+    MEASURE 'Medidas'[%_total_de_contatos_failed] = DIVIDE(CALCULATE(DISTINCTCOUNT(F_OLI_CRM[negotiation_id]), F_OLI_CRM[number_status] ="failed"), [Qtde_total_de_contatos])
+    MEASURE 'Medidas'[%_total_de_contatos_read] = DIVIDE(CALCULATE(DISTINCTCOUNT(F_OLI_CRM[negotiation_id]), F_OLI_CRM[number_status] ="read"),[Qtde_total_de_contatos])
+    MEASURE 'Medidas'[%_total_de_contatos_delivered] = DIVIDE(CALCULATE(DISTINCTCOUNT(F_OLI_CRM[negotiation_id]), F_OLI_CRM[number_status] ="delivered"),[Qtde_entregue_de_contatos])
+    MEASURE 'Medidas'[Volume_de_itens_comunicados] = SUMX(
+    VALUES(F_OLI_CRM[negotiation_id]), 
+    CALCULATE(SUM(F_OLI_CRM[extra_info.produtos_campanha]))
+)
+    MEASURE 'Medidas'[Volume_de_itens_optin] = CALCULATE(
+    SUM(D_optin[optin_sent]),
+    FILTER(
+        ALL(D_Seller), 
+        D_Seller[id] IN VALUES(F_OLI_CRM[seller_id])
+    )
+)
+    MEASURE 'Medidas'[Positivação_itens] = [Volume_de_itens_optin]/[Volume_de_itens_comunicados]
+    MEASURE 'Medidas'[YTD Positivação_itens] = IF (
+    [_ShowValueForDates],
+    CALCULATE (
+        [Positivação_itens],
+        DATESYTD ( 'Date'[Date] )
+    )
+)
+    MEASURE 'Medidas'[QTD Positivação_itens] = IF (
+    [_ShowValueForDates],
+    CALCULATE (
+        [Positivação_itens],
+        DATESQTD ( 'Date'[Date] )
+    )
+)
+    MEASURE 'Medidas'[MTD Positivação_itens] = IF (
+    [_ShowValueForDates],
+    CALCULATE (
+        [Positivação_itens],
+        DATESMTD ( 'Date'[Date] )
+    )
+)
+    MEASURE 'Medidas'[PY Positivação_itens] = IF (
+    [_ShowValueForDates],
+    CALCULATE (
+        [Positivação_itens],
+        CALCULATETABLE (
+            DATEADD ( 'Date'[Date], -1, YEAR ),
+            'Date'[DateWithTransactions] = TRUE
+        )
+    )
+)
+    MEASURE 'Medidas'[YOY Positivação_itens] = VAR __ValueCurrentPeriod = [Positivação_itens]
+VAR __ValuePreviousPeriod = [PY Positivação_itens]
+VAR __Result =
+    IF (
+        NOT ISBLANK ( __ValueCurrentPeriod ) && NOT ISBLANK ( __ValuePreviousPeriod ),
+        __ValueCurrentPeriod - __ValuePreviousPeriod
+    )
+RETURN
+    __Result
+    MEASURE 'Medidas'[YOY % Positivação_itens] = DIVIDE ( 
+    [YOY Positivação_itens],
+    [PY Positivação_itens]
+)
+    MEASURE 'Medidas'[PQ Positivação_itens] = IF (
+    [_ShowValueForDates],
+    CALCULATE (
+        [Positivação_itens],
+        CALCULATETABLE (
+            DATEADD ( 'Date'[Date], -1, QUARTER ),
+            'Date'[DateWithTransactions] = TRUE
+        )
+    )
+)
+    MEASURE 'Medidas'[QOQ Positivação_itens] = VAR __ValueCurrentPeriod = [Positivação_itens]
+VAR __ValuePreviousPeriod = [PQ Positivação_itens]
+VAR __Result =
+    IF (
+        NOT ISBLANK ( __ValueCurrentPeriod ) && NOT ISBLANK ( __ValuePreviousPeriod ),
+        __ValueCurrentPeriod - __ValuePreviousPeriod
+    )
+RETURN
+    __Result
+    MEASURE 'Medidas'[QOQ % Positivação_itens] = DIVIDE ( 
+    [QOQ Positivação_itens],
+    [PQ Positivação_itens]
+)
+    MEASURE 'Medidas'[PM Positivação_itens] = IF (
+    [_ShowValueForDates],
+    CALCULATE (
+        [Positivação_itens],
+        CALCULATETABLE (
+            DATEADD ( 'Date'[Date], -1, MONTH ),
+            'Date'[DateWithTransactions] = TRUE
+        )
+    )
+)
+    MEASURE 'Medidas'[MOM Positivação_itens] = VAR __ValueCurrentPeriod = [Positivação_itens]
+VAR __ValuePreviousPeriod = [PM Positivação_itens]
+VAR __Result =
+    IF (
+        NOT ISBLANK ( __ValueCurrentPeriod ) && NOT ISBLANK ( __ValuePreviousPeriod ),
+        __ValueCurrentPeriod - __ValuePreviousPeriod
+    )
+RETURN
+    __Result
+    MEASURE 'Medidas'[MOM % Positivação_itens] = DIVIDE ( 
+    [MOM Positivação_itens],
+    [PM Positivação_itens]
+)
+    MEASURE 'Medidas'[PYTD Positivação_itens] = IF (
+    [_ShowValueForDates],
+    CALCULATE (
+        [YTD Positivação_itens],
+        CALCULATETABLE (
+            DATEADD ( 'Date'[Date], -1, YEAR ),
+            'Date'[DateWithTransactions] = TRUE
+        )
+    )
+)
+    MEASURE 'Medidas'[YOYTD Positivação_itens] = VAR __ValueCurrentPeriod = [YTD Positivação_itens]
+VAR __ValuePreviousPeriod = [PYTD Positivação_itens]
+VAR __Result =
+    IF (
+        NOT ISBLANK ( __ValueCurrentPeriod ) && NOT ISBLANK ( __ValuePreviousPeriod ),
+        __ValueCurrentPeriod - __ValuePreviousPeriod
+    )
+RETURN
+    __Result
+    MEASURE 'Medidas'[YOYTD % Positivação_itens] = DIVIDE ( 
+    [YOYTD Positivação_itens],
+    [PYTD Positivação_itens]
+)
+    MEASURE 'Medidas'[PQTD Positivação_itens] = IF (
+    [_ShowValueForDates],
+    CALCULATE (
+        [QTD Positivação_itens],
+        CALCULATETABLE (
+            DATEADD ( 'Date'[Date], -1, QUARTER ),
+            'Date'[DateWithTransactions] = TRUE
+        )
+    )
+)
+    MEASURE 'Medidas'[QOQTD Positivação_itens] = VAR __ValueCurrentPeriod = [QTD Positivação_itens]
+VAR __ValuePreviousPeriod = [PQTD Positivação_itens]
+VAR __Result =
+    IF (
+        NOT ISBLANK ( __ValueCurrentPeriod ) && NOT ISBLANK ( __ValuePreviousPeriod ),
+        __ValueCurrentPeriod - __ValuePreviousPeriod
+    )
+RETURN
+    __Result
+    MEASURE 'Medidas'[QOQTD % Positivação_itens] = DIVIDE ( 
+    [QOQTD Positivação_itens],
+    [PQTD Positivação_itens]
+)
+    MEASURE 'Medidas'[PMTD Positivação_itens] = IF (
+    [_ShowValueForDates],
+    CALCULATE (
+        [MTD Positivação_itens],
+        CALCULATETABLE (
+            DATEADD ( 'Date'[Date], -1, MONTH ),
+            'Date'[DateWithTransactions] = TRUE
+        )
+    )
+)
+    MEASURE 'Medidas'[MOMTD Positivação_itens] = VAR __ValueCurrentPeriod = [MTD Positivação_itens]
+VAR __ValuePreviousPeriod = [PMTD Positivação_itens]
+VAR __Result =
+    IF (
+        NOT ISBLANK ( __ValueCurrentPeriod ) && NOT ISBLANK ( __ValuePreviousPeriod ),
+        __ValueCurrentPeriod - __ValuePreviousPeriod
+    )
+RETURN
+    __Result
+    MEASURE 'Medidas'[MOMTD % Positivação_itens] = DIVIDE ( 
+    [MOMTD Positivação_itens],
+    [PMTD Positivação_itens]
+)
+    MEASURE 'Medidas'[PYC Positivação_itens] = IF (
+    [_ShowValueForDates],
+    CALCULATE (
+        [Positivação_itens],
+        PARALLELPERIOD ( 'Date'[Date], -1, YEAR )
+    )
+)
+    MEASURE 'Medidas'[YTDOPY Positivação_itens] = VAR __ValueCurrentPeriod = [YTD Positivação_itens]
+VAR __ValuePreviousPeriod = [PYC Positivação_itens]
+VAR __Result =
+    IF (
+        NOT ISBLANK ( __ValueCurrentPeriod ) && NOT ISBLANK ( __ValuePreviousPeriod ),
+        __ValueCurrentPeriod - __ValuePreviousPeriod
+    )
+RETURN
+    __Result
+    MEASURE 'Medidas'[YDTOPY % Positivação_itens] = DIVIDE ( 
+    [YTDOPY Positivação_itens],
+    [PYC Positivação_itens]
+)
+    MEASURE 'Medidas'[PQC Positivação_itens] = IF (
+    [_ShowValueForDates],
+    CALCULATE (
+        [Positivação_itens],
+        PARALLELPERIOD ( 'Date'[Date], -1, QUARTER )
+    )
+)
+    MEASURE 'Medidas'[QTDOPQ Positivação_itens] = VAR __ValueCurrentPeriod = [QTD Positivação_itens]
+VAR __ValuePreviousPeriod = [PQC Positivação_itens]
+VAR __Result =
+    IF (
+        NOT ISBLANK ( __ValueCurrentPeriod ) && NOT ISBLANK ( __ValuePreviousPeriod ),
+        __ValueCurrentPeriod - __ValuePreviousPeriod
+    )
+RETURN
+    __Result
+    MEASURE 'Medidas'[QDTOPQ % Positivação_itens] = DIVIDE ( 
+    [QTDOPQ Positivação_itens],
+    [PQC Positivação_itens]
+)
+    MEASURE 'Medidas'[PMC Positivação_itens] = IF (
+    [_ShowValueForDates],
+    CALCULATE (
+        [Positivação_itens],
+        PARALLELPERIOD ( 'Date'[Date], -1, MONTH )
+    )
+)
+    MEASURE 'Medidas'[MTDOPM Positivação_itens] = VAR __ValueCurrentPeriod = [MTD Positivação_itens]
+VAR __ValuePreviousPeriod = [PMC Positivação_itens]
+VAR __Result =
+    IF (
+        NOT ISBLANK ( __ValueCurrentPeriod ) && NOT ISBLANK ( __ValuePreviousPeriod ),
+        __ValueCurrentPeriod - __ValuePreviousPeriod
+    )
+RETURN
+    __Result
+    MEASURE 'Medidas'[MTDOPM % Positivação_itens] = DIVIDE ( 
+    [MTDOPM Positivação_itens],
+    [PMC Positivação_itens]
+)
+    MEASURE 'Medidas'[MAT Positivação_itens] = IF (
+    [_ShowValueForDates],
+    CALCULATE (
+        [Positivação_itens],
+        DATESINPERIOD (
+            'Date'[Date],
+            MAX ( 'Date'[Date] ),
+            -1,
+            YEAR
+        )
+    )
+)
+    MEASURE 'Medidas'[PYMAT Positivação_itens] = IF (
+    [_ShowValueForDates],
+    CALCULATE (
+        [MAT Positivação_itens],
+        DATEADD ( 'Date'[Date], -1, YEAR )
+    )
+)
+    MEASURE 'Medidas'[MATG Positivação_itens] = VAR __ValueCurrentPeriod = [MAT Positivação_itens]
+VAR __ValuePreviousPeriod = [PYMAT Positivação_itens]
+VAR __Result =
+    IF (
+        NOT ISBLANK ( __ValueCurrentPeriod ) && NOT ISBLANK ( __ValuePreviousPeriod ),
+        __ValueCurrentPeriod - __ValuePreviousPeriod
+    )
+RETURN
+    __Result
+    MEASURE 'Medidas'[MATG % Positivação_itens] = DIVIDE ( 
+    [MATG Positivação_itens],
+    [PYMAT Positivação_itens]
+)
+    MEASURE 'Medidas'[Positivacao_itens_DoD] = VAR PositivacaoAtual = [Positivação_itens]
+VAR PositivacaoAnterior = CALCULATE(
+    [Positivação_itens],
+    DATEADD('Date'[Date], -1, DAY)
+)
+VAR VariacaoDoD = PositivacaoAtual - PositivacaoAnterior
+RETURN
+    VariacaoDoD
+    MEASURE 'Medidas'[Positivacao_itens_DoD_Percentual] = VAR PositivacaoAtual = [Positivação_itens]
+VAR PositivacaoAnterior = CALCULATE(
+    [Positivação_itens],
+    DATEADD('Date'[Date], -1, DAY)
+)
+VAR VariacaoPercentualDoD = DIVIDE(
+    PositivacaoAtual - PositivacaoAnterior,
+    PositivacaoAnterior
+)
+RETURN
+    VariacaoPercentualDoD
+    MEASURE 'Medidas'[Qtde_SKU_almentado] = CALCULATE(DISTINCTCOUNT(D_Produto[SKU]), FILTER(D_Seller,[Ganho_de_estoque]> 0))
+    MEASURE 'Date'[_ShowValueForDates] = VAR __LastDateWithData =
+    CALCULATE (
+        MAXX ( { MAX ( 'F_qntde_pré_disparo'[dia] ), MAX ( 'F_qntde_pré_disparo'[mes_ano] ), MAX ( 'F_qntde_pós_disparo'[dia] ), MAX ( 'F_qntde_pós_disparo'[mes_ano] ), MAX ( 'F_df_filtrado'[date_contact] ), MAX ( 'D_Seller'[created_at] ), MAX ( 'F_OLI_Histórico'[date_contact] ), MAX ( 'F_OLI_CRM'[date_contact] ), MAX ( 'D_Codigos_Nacionais'[DT_INICIO_VIGENCIA] ) }, ''[Value] ),
+        REMOVEFILTERS ()
+    )
+VAR __FirstDateVisible =
+    MIN ( 'Date'[Date] )
+VAR __Result =
+    __FirstDateVisible <= __LastDateWithData
+RETURN
+    __Result
+
+EVALUATE
+    SUMMARIZECOLUMNS(
+        "GMV_Incremental", 'Medidas'[GMV_Incremental],
+        "GPA_Incremental", 'Medidas'[GPA_Incremental],
+        "Qtde_estoque_antes", 'Medidas'[Qtde_estoque_antes],
+        "Qtde_estoque_depois", 'Medidas'[Qtde_estoque_depois],
+        "Ganho_de_estoque", 'Medidas'[Ganho_de_estoque],
+        "Qtde_total_de_negociações", 'Medidas'[Qtde_total_de_negociações],
+        "Qtde_entregue_de_contatos", 'Medidas'[Qtde_entregue_de_contatos],
+        "Qtde_sellers_contatados", 'Medidas'[Qtde_sellers_contatados],
+        "Qtde_SKU_contatados", 'Medidas'[Qtde_SKU_contatados],
+        "Qtde_total_sellers", 'Medidas'[Qtde_total_sellers],
+        "%_sellers_contatados", 'Medidas'[%_sellers_contatados],
+        "%_SKU_contatados", 'Medidas'[%_SKU_contatados],
+        "Qtde_total_SKU", 'Medidas'[Qtde_total_SKU],
+        "Qtde_total_de_contatos", 'Medidas'[Qtde_total_de_contatos],
+        "%_total_de_contatos_failed", 'Medidas'[%_total_de_contatos_failed],
+        "%_total_de_contatos_read", 'Medidas'[%_total_de_contatos_read],
+        "%_total_de_contatos_delivered", 'Medidas'[%_total_de_contatos_delivered],
+        "Volume_de_itens_comunicados", 'Medidas'[Volume_de_itens_comunicados],
+        "Volume_de_itens_optin", 'Medidas'[Volume_de_itens_optin],
+        "Positivação_itens", 'Medidas'[Positivação_itens],
+        "YTD Positivação_itens", 'Medidas'[YTD Positivação_itens],
+        "QTD Positivação_itens", 'Medidas'[QTD Positivação_itens],
+        "MTD Positivação_itens", 'Medidas'[MTD Positivação_itens],
+        "PY Positivação_itens", 'Medidas'[PY Positivação_itens],
+        "YOY Positivação_itens", 'Medidas'[YOY Positivação_itens],
+        "YOY % Positivação_itens", 'Medidas'[YOY % Positivação_itens],
+        "PQ Positivação_itens", 'Medidas'[PQ Positivação_itens],
+        "QOQ Positivação_itens", 'Medidas'[QOQ Positivação_itens],
+        "QOQ % Positivação_itens", 'Medidas'[QOQ % Positivação_itens],
+        "PM Positivação_itens", 'Medidas'[PM Positivação_itens],
+        "MOM Positivação_itens", 'Medidas'[MOM Positivação_itens],
+        "MOM % Positivação_itens", 'Medidas'[MOM % Positivação_itens],
+        "PYTD Positivação_itens", 'Medidas'[PYTD Positivação_itens],
+        "YOYTD Positivação_itens", 'Medidas'[YOYTD Positivação_itens],
+        "YOYTD % Positivação_itens", 'Medidas'[YOYTD % Positivação_itens],
+        "PQTD Positivação_itens", 'Medidas'[PQTD Positivação_itens],
+        "QOQTD Positivação_itens", 'Medidas'[QOQTD Positivação_itens],
+        "QOQTD % Positivação_itens", 'Medidas'[QOQTD % Positivação_itens],
+        "PMTD Positivação_itens", 'Medidas'[PMTD Positivação_itens],
+        "MOMTD Positivação_itens", 'Medidas'[MOMTD Positivação_itens],
+        "MOMTD % Positivação_itens", 'Medidas'[MOMTD % Positivação_itens],
+        "PYC Positivação_itens", 'Medidas'[PYC Positivação_itens],
+        "YTDOPY Positivação_itens", 'Medidas'[YTDOPY Positivação_itens],
+        "YDTOPY % Positivação_itens", 'Medidas'[YDTOPY % Positivação_itens],
+        "PQC Positivação_itens", 'Medidas'[PQC Positivação_itens],
+        "QTDOPQ Positivação_itens", 'Medidas'[QTDOPQ Positivação_itens],
+        "QDTOPQ % Positivação_itens", 'Medidas'[QDTOPQ % Positivação_itens],
+        "PMC Positivação_itens", 'Medidas'[PMC Positivação_itens],
+        "MTDOPM Positivação_itens", 'Medidas'[MTDOPM Positivação_itens],
+        "MTDOPM % Positivação_itens", 'Medidas'[MTDOPM % Positivação_itens],
+        "MAT Positivação_itens", 'Medidas'[MAT Positivação_itens],
+        "PYMAT Positivação_itens", 'Medidas'[PYMAT Positivação_itens],
+        "MATG Positivação_itens", 'Medidas'[MATG Positivação_itens],
+        "MATG % Positivação_itens", 'Medidas'[MATG % Positivação_itens],
+        "Positivacao_itens_DoD", 'Medidas'[Positivacao_itens_DoD],
+        "Positivacao_itens_DoD_Percentual", 'Medidas'[Positivacao_itens_DoD_Percentual],
+        "Qtde_SKU_almentado", 'Medidas'[Qtde_SKU_almentado],
+        "_ShowValueForDates", 'Date'[_ShowValueForDates]
+    )
