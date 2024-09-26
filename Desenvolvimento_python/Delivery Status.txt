@@ -1,0 +1,34 @@
+SELECT
+    CASE
+        WHEN "dataEntrega" IS NOT NULL THEN 'Entregue'
+        WHEN "previsaoEntrega" IS NULL THEN
+            CASE
+                WHEN "dataPedido" = CURRENT_DATE THEN 'Entrega hoje'
+                WHEN "dataPedido" < CURRENT_DATE THEN 'Atrasado'
+                ELSE 'No praso'
+            END
+        WHEN "previsaoEntrega" = CURRENT_DATE THEN 'Entrega hoje'
+        WHEN "previsaoEntrega" < CURRENT_DATE THEN 'Entregue em Atrasado'
+        ELSE 'Entregue no praso'
+    END AS status,
+    COUNT(*) AS status_count
+FROM pedido
+WHERE loja = 'Linea Brasil'
+    AND "dataPedido" >= '2023-09-01 00:00:00'
+    AND "dataPedido" <= '2023-09-30 23:59:59'
+    AND "statusPedido" IN (
+        'aprovado',
+        'entregue',
+        'em viagem',
+        'CONCLUDED',
+        'PAID_WAITING_SHIP',
+        'INVOICED',
+        'PAID_WAITING_DELIVERY',
+        'faturando',
+        'Coletando',
+        'coletando',
+        'Em andamento',
+        'Baixado',
+        'Atendido'
+    )
+GROUP BY status;

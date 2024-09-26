@@ -1,0 +1,53 @@
+SELECT
+    t3."statusPedido",
+    t3."dataPedido",
+    t3."idPedido",
+    t2.peso,
+    t3.loja,
+    t1.sku,
+    t2.altura,
+    t2.largura,
+    t2.profundidade,
+    (CASE
+        WHEN t2.medida = 'Centímetro' OR t2.medida = 'Centímetros' THEN t2.altura * t2.largura * t2.profundidade * POWER(10, -6)
+        WHEN t2.medida = 'Milímetro' THEN t2.altura * t2.largura * t2.profundidade * POWER(10, -9)
+        ELSE t2.altura * t2.largura * t2.profundidade
+    END) AS cubagem,
+    t2.medida,
+    t3.cep,
+    t3.cidade,
+    t3.uf,
+    t3."totalCompra",
+    t3."previsaoEntregaTransportadora",
+    t3."dataEntrega",
+    (CASE
+        WHEN t3."previsaoEntrega" IS NOT NULL THEN t3."previsaoEntrega" - t3."dataPedido"
+        ELSE t3."dataEntrega" - t3."dataPedido"
+    END) AS "Tempo de entrega",
+    t3."valorFrete",
+    t2.categoria,
+    t1.titulo
+FROM
+    item AS T1
+LEFT JOIN
+    balance AS T2 ON T1.sku = T2.sku AND T1."pedidoLoja" = T2.loja
+LEFT JOIN
+    pedido AS T3 ON T1."pedidoIdPedido" = T3."idPedido" AND T1."pedidoLoja" = T3.loja AND T1."pedidoIntegradora" = T3.integradora
+WHERE
+    t3."dataPedido" > '2023-04-01 00:00:00.000'
+    AND t3."dataPedido" < '2023-07-01 00:00:00.000'
+    AND t3."statusPedido" IN (
+        'aprovado',
+        'entregue',
+        'em viagem',
+        'CONCLUDED',
+        'PAID_WAITING_SHIP',
+        'INVOICED',
+        'PAID_WAITING_DELIVERY',
+        'faturando',
+        'Coletando',
+        'coletando',
+        'Em andamento',
+        'Baixado',
+        'Atendido'
+    );
