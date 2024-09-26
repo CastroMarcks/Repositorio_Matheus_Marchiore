@@ -1,0 +1,235 @@
+
+--SITAXE 
+select column_1, column_2,column_3
+from schema_1.table_1
+
+
+--Comandos básicos do SQL
+--Exemplo (1) Seleção de uma coluna de uma tabela 
+--Liste os e-mails dos lientes da tabela sales.coustomers
+select email 
+from sales.coustomers 
+
+--Exemplo 2 Seleção de mais dde uma coluna de uma tabela 
+--Liste os emails de nos dos clientes da tabela sales.customers
+--OBS: antes do comando from não deve ter virgula
+
+Select email,  first_name, last_name
+from sales.customers
+
+
+--Exemplo 3 seleção de todas as colunas de uma tabela. 
+--Liste os emails de nos dos clientes da tabela sales.customers
+
+Select *
+from sales.customers
+
+
+--SITAXE 
+select distinct column_1, column_2,column_3
+from schema_1.table_1
+
+
+--Comandos básicos do SQL
+--Exemplo (1) Seleção de uma coluna de uma tabela 
+--Liste as marcas de carro distitintas que constam na tabela products
+select brand 
+from sales.products -- 333 linhas
+
+--Exemplo 2 Seleção de mais dde uma coluna de uma tabela com DISTINCT
+--Liste as marcas de carro distitintas que constam na tabela products
+select distinct brand 
+from sales.products -- 40 linhas
+
+--Exemplo 2 Seleção de mais dde uma coluna de uma tabela com DISTINCT
+--Liste as marcas e anos de modelos de carro distitintas que constam na tabela products
+
+select distinct  bran, model_year
+from sales.customers
+
+
+--SITAXE 
+select column_1, column_2,column_3
+from schema_1.table_1
+where condição_x = true
+
+--Exemplo (1) Seleção com um filtro unitário.  
+--liste o emails dos clientes da nossa base que moram no estado de Santa atarina.
+
+select email, state
+from sales.coustomers 
+where state = 'SC'
+
+--Exemplo 2 Filtro com mais de uma condição. 
+--liste o emails dos clientes da nossa base que moram no estado 
+--de Santa atarina ou Mato Grosso do Sul.
+
+select email, state
+from sales.coustomers 
+where state = 'SC' or state ='MS'
+
+
+--Exemplo 3 filtro de condição com data. 
+--Liste os emails dos clientes da nossa base que moram no estado de Santa Catarina
+--ou Mato Grosso do sul e que tem mais de 30 anos.
+
+select email, state, birth_date 
+from sales.coustomers 
+where (state = 'SC' or state ='MS') and birth_date < '1991-12-28'
+
+
+--SITAXE 
+select column_1, column_2,column_3
+from schema_1.table_1
+where condição_x=true 
+order by coluna_1
+
+--Exemplo (1) Ordenação de valores numéricos 
+--Liste os produtos da tabela products na ordem crescente com base no preço 
+
+select * 
+from sales.products
+order by price desc 
+
+
+--Exemplo 2 Orde não de texto.
+--Liste  os estados distintos da tablea customers na ordem crescente.
+Select distinct state 
+from sales.customers
+order by state 
+
+
+
+--SITAXE 
+select column_1, column_2,column_3
+from schema_1.table_1
+where condição_x=true 
+order by coluna_1
+limit N
+
+--Exemplo (1) seleção das N primeiras linhas usando o LIMIT
+--Liste as 10 primeiras linhas da tabela funel
+
+select * 
+from sales.funel
+limit 10 
+
+
+--Exemplo 2 Seleção das N primeiras linhas usando o LIMIT e ORDER BY
+--Liste os 10 produtos mais caros da tabela products. 
+
+select *
+from sales.funel
+order by price desc
+limit 10 
+
+
+-- Exemplo 01 - Converção de texto em data 
+-- Corrija a query abaixo utilizando o operador ::
+
+select '2021-10-01'::date - '2021-02-01'::date 
+select nome_coluna::date
+from  colum_name 
+
+-- Exemplo 2 Conversão de texto em númoero
+-- Corrija a query abaixo utilizando o operador :: 
+select '100'::numeric -'10':: numeric 
+
+--Exemplo 03 Conversão de númeoro em texto 
+-- Corrija a query abaixo utilizando o operador :: 
+
+select replace(112122::text, '1', 'A')
+
+-- Exemplo  4 Conversão de testo em data 
+-- Corrija a query abaico utilizando a função CAST
+-- Usar quando o Operador :: não funciona!
+select cast('2021-10-01' as date) - caster('2021-02-01' as date)
+
+-- Exemplo 01 - CAgrupamento de dados com CASE WHEN
+-- Calcule o n° de clientes que ganham abaixo de 5k, etre 5k e 10k, entre 10k
+-- e 15k e acima de 5 k 
+
+with faixa_de_renda as(
+	select
+		income,
+		case
+		when income < 5000 then '0-5000'
+		when income >= 5000 and income < 10000 then'5000-10000'
+		when income >= 10000 and income <15000 then '10000-1500'
+		else "15000+"
+		end as faixa_renda
+	from sales.customers
+)
+
+Select faixa_renda (*)
+from faixa_de_renda
+groupy by faixa_renda
+
+--Exemplo número 2 tratamento de dados nulos com COALESCE
+-- Crie uma coluna chamada população_ajustada na tabela tem_tables.regions e,
+-- preencha os dados da coluna population, mas caso esse campo estiver lnulo,
+-- preencha com a população média (geral) das cidades do BRasil.
+
+selec * from temp_tables. regions limit 10 
+select
+		*, 
+		case
+		when population is not null then population
+		else (select avg (population) from temp_tables.regions)
+		end as populacao_ajustada
+from temp_tables.regions
+where population is null
+
+-- Agora para Colesce
+
+selec * from temp_tables. regions limit 10 
+select
+		*, 
+	colesce(population, (select avg(population) from temp_tables.regions)) as populacao_ajustada 
+from temp_tables.regions
+ 
+
+-- Exemplo 01 - CAgrupamento de dados com CASE WHEN
+-- Calcule o n° de clientes que ganham abaixo de 5k, etre 5k e 10k, entre 10k
+-- e 15k e acima de 5 k 
+
+with faixa_de_renda as(
+	select
+		income,
+		case
+		when income < 5000 then '0-5000'
+		when income >= 5000 and income < 10000 then'5000-10000'
+		when income >= 10000 and income <15000 then '10000-1500'
+		else "15000+"
+		end as faixa_renda
+	from sales.customers
+)
+
+Select faixa_renda (*)
+from faixa_de_renda
+groupy by faixa_renda
+
+--Exemplo número 2 tratamento de dados nulos com COALESCE
+-- Crie uma coluna chamada população_ajustada na tabela tem_tables.regions e,
+-- preencha os dados da coluna population, mas caso esse campo estiver lnulo,
+-- preencha com a população média (geral) das cidades do BRasil.
+
+selec * from temp_tables. regions limit 10 
+select
+		*, 
+		case
+		when population is not null then population
+		else (select avg (population) from temp_tables.regions)
+		end as populacao_ajustada
+from temp_tables.regions
+where population is null
+
+-- Agora para Colesce
+
+selec * from temp_tables. regions limit 10 
+select
+		*, 
+	colesce(population, (select avg(population) from temp_tables.regions)) as populacao_ajustada 
+from temp_tables.regions
+ 
+
